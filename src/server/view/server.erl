@@ -41,7 +41,7 @@ loop(Socket)->
   inet:setopts(Socket,[{active,once}]),
   receive
     {tcp,Socket,Request}->
-      io:format("Socket ~w ~w receive request ~n", [Socket, self()]),
+      io:format("Socket ~w [~w] receive request ~n", [Socket, self()]),
       gen_tcp:send(Socket, Request),
       loop(Socket);
     {tcp_closed,Socket}->

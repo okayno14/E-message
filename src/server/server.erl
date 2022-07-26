@@ -13,7 +13,7 @@
 -export([start/0, wait_request/1]).
 
 start() ->
-  case  gen_tcp:listen(1234,[{active, false}]) of
+  case  gen_tcp:listen(5560,[{active, false}]) of
     {ok, ListenSocket}->
       io:format("~w Acceptors will spawn~n",[8]),
       start_servers(8,ListenSocket),
@@ -25,15 +25,30 @@ start() ->
 start_servers(0,_)-> ok;
 start_servers(Num, ListenSocket)->
   spawn(?MODULE,wait_request,[ListenSocket]),
-  io:format("Acceptor ~w spawned~n",[Num]),
+  io:format("Acceptor#~w spawned~n",[Num]),
   start_servers(Num-1,ListenSocket).
 
 wait_request(ListenSocket)->
   case gen_tcp:accept(ListenSocket) of
-    {ok, SendSocket} -> handle_request(SendSocket);
+    {ok, Socket} ->
+      loop(Socket),
+      wait_request(ListenSocket);
     {error, Reason}->io:format("Error, can't accept request. ~w~n",[Reason])
   end.
 
-handle_request(_SendSocket)->
-  io:format("Request accepted~n").
+%%функция-цикл работы потока-акцептора
+loop(Socket)->
+  inet:setopts(Socket,[{active,once}]),
+  receive
+    {tcp,Socket,Request}->
+      io:format("Socket ~w ~w receive request ~n", [Socket, self()]),
+      gen_tcp:send(Socket, Request),
+      loop(Socket);
+    {tcp_closed,Socket}->
+      io:format("Socket ~w closed [~w]~n",[Socket,self()]),
+      ok
+  end.
+
+%%обработка клиентских запросов
+%%process_request
 

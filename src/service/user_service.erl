@@ -8,10 +8,11 @@
 %%%-------------------------------------------------------------------
 
 -module(user_service).
+-include("jsonerl/jsonerl.hrl").
 -include("user.hrl").
 
 %% API
--export([create/0, create_tables/0,read/0,update/0,delete/0]).
+-export([create/0, create_tables/0,read/0,update/0,delete/0,record_to_json/0, json_to_record/0]).
 
 create()->
   start_db(),
@@ -48,7 +49,28 @@ delete()->
   {atomic, []} = mnesia:transaction(fun()-> mnesia:read(user, "vasya228") end),
   io:format("Object vasya228 deleted~n").
 
-wait_for_init()->
+record_to_json()->
+  start_db(),
+  wait_for_init(),
+  Obj=#user{nick = <<"okayno14">>,lastname = <<"Alekseev">>, firstname = <<"Александр"/utf8>>},
+  Json=?record_to_json(user,Obj),
+  io:format("Json presentation in Erlang: ~p~n",[Json]),
+  {ok,File} = file:open("vasya228.json",[write]),
+  ok = file:write(File,Json),
+  file:close(File).
+
+json_to_record()->
+  case file:read_file("vasya228.json") of
+    {ok, Binary} ->
+      io:format("Json readed successfuly~n"),
+      JsonData = binary_to_list(Binary),
+      Obj=?json_to_record(user,JsonData),
+      io:format("Record from JSON-file ~p~n",[Obj]);
+    {error, Reason} -> io:format("Error, ~p",[Reason])
+  end.
+
+
+  wait_for_init()->
   case mnesia:wait_for_tables([user,seq], infinity) of
     {timeout,_TableList}->io:format("Timeout~n");
     ok->io:format("table loaded~n");

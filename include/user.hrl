@@ -1,3 +1,4 @@
--record(user, {lastname,
-              firstname,
-              fathername}).
+-record(user, {nick,
+              lastname="John",
+              firstname="Doe",
+              fathername=unknown}).

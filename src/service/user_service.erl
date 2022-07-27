@@ -11,7 +11,7 @@
 -include("user.hrl").
 
 %% API
--export([foo/0, create_tables/0,read/0,update/0]).
+-export([foo/0, create_tables/0,read/0,update/0,delete/0]).
 
 
 
@@ -39,6 +39,13 @@ update()->
   io:format("Updated object = ~p~n",[Obj1]),
   {atomic,ok}=mnesia:transaction(fun()-> mnesia:write(Obj1) end),
   io:format("Object vasya228 updated ~p~n",[Obj1]).
+
+delete()->
+  start_db(),
+  wait_for_init(),
+  {atomic, ok} = mnesia:transaction(fun()-> mnesia:delete({user,"vasya228"}) end),
+  {atomic, []} = mnesia:transaction(fun()-> mnesia:read(user, "vasya228") end),
+  io:format("Object vasya228 deleted~n").
 
 wait_for_init()->
   case mnesia:wait_for_tables([user], infinity) of

@@ -11,15 +11,16 @@
 -include("user.hrl").
 
 %% API
--export([foo/0, create_tables/0,read/0,update/0,delete/0]).
+-export([create/0, create_tables/0,read/0,update/0,delete/0]).
 
-
-
-foo()->
+create()->
   start_db(),
+  wait_for_init(),
   Person1=#user{nick="vasya228"},
   A=Person1#user{firstname = "Vasiliy"},
-  B=A#user{lastname = "Ivanov"},
+
+  Id = mnesia:dirty_update_counter(seq,user,1),
+  B=A#user{lastname = "Ivanov", id = Id},
   B,
   wait_for_init(),
   {atomic,ok}=mnesia:transaction(fun()-> mnesia:write(B) end).
@@ -48,7 +49,7 @@ delete()->
   io:format("Object vasya228 deleted~n").
 
 wait_for_init()->
-  case mnesia:wait_for_tables([user], infinity) of
+  case mnesia:wait_for_tables([user,seq], infinity) of
     {timeout,_TableList}->io:format("Timeout~n");
     ok->io:format("table loaded~n");
     {error,Reason}->io:format("table failed loading ~p~n",[Reason])
@@ -56,15 +57,23 @@ wait_for_init()->
 
 create_tables()->
   create_schema(),
-  Fields = record_info(fields,user),
-  io:format("~p~n", [Fields]),
   start_db(),
-  Table = mnesia:create_table(user,[
+
+  {atomic, ok} = mnesia:create_table(user,[
     {record_name,user},
     {type, set},
     {attributes,record_info(fields,user)},
     {disc_copies, [node()]}]),
-  io:format("~p~n",[Table]).
+
+  {atomic,ok} = mnesia:create_table(seq,[
+    {record_name,seq},
+    {type,set},
+    {attributes,record_info(fields,seq)},
+    {disc_copies,[node()]}]),
+
+  {atomic,ok} = mnesia:transaction(fun()-> mnesia:write(#seq{table_name=user,counter=0}) end),
+
+  io:format("Tables creation successful!~n").
 
 start_db()->
   application:start(mnesia).

@@ -13,6 +13,8 @@
 -export([start/0, wait_request/1]).
 
 start() ->
+  db:start_db(),
+  io:format("DB started~n"),
   case  gen_tcp:listen(5560,[{active, false}]) of
     {ok, ListenSocket}->
       io:format("~w Acceptors will spawn~n",[8]),

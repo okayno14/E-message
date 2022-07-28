@@ -24,10 +24,10 @@ create_table()->
 
 write(Dialogue)->
   ID = seq:get_counter(seq),
-  mnesia:transaction(
-    fun()->
-      mnesia:write(Dialogue#dialogue{id=ID})
-    end).
+  io:format("ID=~w~n",[ID]),
+  Commited = Dialogue#dialogue{id=ID},
+  io:format("Commited Dialogue: ~p~n",[Commited]),
+  mnesia:transaction(fun()->mnesia:write(Commited)end).
 
 read(ID)->
   Transaction = mnesia:transaction(fun()-> mnesia:read(dialogue,ID) end),
@@ -43,10 +43,17 @@ read_by_User(User)->
       mnesia:foldl(
         fun(Dialogue, Res)->
           case dialogue_service:containsUser(Dialogue,User) of
-            true->[Dialogue|Res];
-            _->Res
+            true->
+              L=[Dialogue|Res],
+              io:format("Current Res:~p~n",[L]),
+              L;
+            _->
+              io:format("Current Res:~p~n",[Res]),
+              Res
           end
-        end,[],dialogue)
+        end,
+        [],
+        dialogue)
     end),
   case Transaction of
     {atomic,[]}->{error, not_found};

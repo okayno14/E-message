@@ -12,5 +12,5 @@
 %% API
 -export([containsUser/2]).
 
-containsUser(#dialogue{users = Users}=_Dialogue, #user{nick = Nick2}=_User)->
+containsUser(#dialogue{users = Users}=_Dialogue, #user{nick = Nick2}=_User) ->
   lists:any(fun(Nick)->Nick=:=Nick2 end,Users).

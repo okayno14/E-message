@@ -10,7 +10,7 @@
 -include("entity.hrl").
 
 %% API
--export([create_table/0,get_counter/1]).
+-export([create_table/0,get_counter/1,init/0]).
 
 create_table()->
   mnesia:create_table(seq,
@@ -20,6 +20,9 @@ create_table()->
       {attributes, record_info(fields, seq)},
       {disc_copies, [node()]}
     ]).
+
+init()->
+  {atomic, ok} = mnesia:transaction(fun()-> mnesia:write(#seq{table_name = dialogue,counter =  0}) end).
 
 get_counter(Entity)->
   mnesia:dirty_update_counter(seq,Entity,1).

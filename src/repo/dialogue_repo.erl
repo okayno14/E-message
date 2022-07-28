@@ -11,3 +11,14 @@
 
 %% API
 -export([]).
+
+%%create_table()->
+%%  mnesia:create_table(dialogue,
+%%    [
+%%      {record_name,dialogue},
+%%      {type, set},
+%%      {attributes,record_info(fields,dialogue)},
+%%      {disc_copies,[node()]}
+%%    ]).
+%%
+%%write(Dialogue)->

@@ -16,10 +16,14 @@
 %%таким образом будет единая точка поднятия базы, которая либо создаст пустую,
 %%либо откроет заполненную
 start_db()->
-  application:start(mnesia),
   create_schema(),
+  io:format("Schema created~n"),
+  application:start(mnesia),
+  io:format("DB started~n"),
   create_tables(),
-  wait_tables().
+  io:format("Tables created~n"),
+  wait_tables(),
+  io:format("Tables initialized~n").
 
 create_schema()->
   mnesia:create_schema([node()]).
@@ -28,8 +32,11 @@ create_schema()->
 %%Если вернулась ошибка, то ничего. Иначе - создать все оставшиеся сущности
 create_tables()->
   case user_repo:create_table() of
-    {atomic,_}->io:format("need more tables");
-    {aborted,_}->ok
+    {atomic,_}->
+      io:format("need more tables~n"),
+      ok;
+    {aborted,_Reason}->
+      ok
   end.
 
 wait_tables()->

@@ -10,6 +10,7 @@
 -module(user_service).
 -include("jsonerl/jsonerl.hrl").
 -include("user.hrl").
+-include("request.hrl").
 
 %% API
 -export([create/0, create_tables/0,read/0,update/0,delete/0,record_to_json/0, json_to_record/0]).

@@ -7,8 +7,8 @@
 %%% Created : 25. июль 2022 11:23
 %%%-------------------------------------------------------------------
 -module(server).
--author("aleksandr_work").
-
+-include("jsonerl/jsonerl.hrl").
+-include("request.hrl").
 %% API
 -export([start/0, wait_request/1]).
 
@@ -41,8 +41,9 @@ loop(Socket)->
   inet:setopts(Socket,[{active,once}]),
   receive
     {tcp,Socket,Request}->
-      io:format("Socket ~w [~w] receive request ~n", [Socket, self()]),
-      gen_tcp:send(Socket, Request),
+      io:format("Socket ~w [~w] received request ~n", [Socket, self()]),
+      io:format("Requset data: ~p~n", [Request]),
+      process_request(Socket,Request),
       loop(Socket);
     {tcp_closed,Socket}->
       io:format("Socket ~w closed [~w]~n",[Socket,self()]),
@@ -50,5 +51,10 @@ loop(Socket)->
   end.
 
 %%обработка клиентских запросов
-%%process_request
+process_request(_Socket, Request)->
+  [Fun, ArgsJSON]=string:split(Request,"\n\n"),
+  io:format("~p~n~p~n",[Fun, ArgsJSON]),
+  Args=?json_to_record(hello, ArgsJSON),
+  Res = Args#hello.x+Args#hello.y,
+  io:format("~w~n",[Res]).
 

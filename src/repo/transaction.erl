@@ -10,10 +10,13 @@
 -author("aleksandr_work").
 
 %% API
--export([begin_transaction/1]).
+-export([begin_transaction/1, abort_transaction/1]).
 
 begin_transaction(Fun)->
   case mnesia:transaction(Fun) of
     {atomic, _Res}->_Res;
     {aborted, _Reason}-> {error,_Reason}
   end.
+
+abort_transaction(Reason)->
+  mnesia:abort(Reason).

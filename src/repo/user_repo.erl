@@ -23,18 +23,12 @@ create_table()->
 
 write(User)->
   case read(User#user.nick) of
-    {error,not_found}->mnesia:transaction(fun()-> mnesia:write(User) end);
-    User->{error, user_already_exists};
-    {error,_Reason}->{error,_Reason}
+    []-> mnesia:write(User);
+    _Obj->transaction:abort_transaction(already_exists)
   end.
 
 read(Nick)->
-  Transaction = mnesia:transaction(fun()-> mnesia:read(user,Nick) end),
-  case Transaction of
-    {atomic,[User|_]}->User;
-    {atomic,[]}->{error,not_found};
-    {aborted, _Reason}->{error,_Reason}
-  end.
+  mnesia:read(user,Nick).
 
 read(Nick,Pass)->
   case read(Nick) of

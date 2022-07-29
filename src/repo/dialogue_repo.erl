@@ -24,10 +24,9 @@ create_table()->
 
 write(Dialogue)->
   ID = seq:get_counter(seq),
-  io:format("ID=~w~n",[ID]),
   Commited = Dialogue#dialogue{id=ID},
-  io:format("Commited Dialogue: ~p~n",[Commited]),
-  mnesia:transaction(fun()->mnesia:write(Commited)end).
+  mnesia:write(Commited),
+  mnesia:read(dialogue,ID).
 
 read(ID)->
   mnesia:read(dialogue,ID).
@@ -56,7 +55,7 @@ fetch_messages(Messages)->
 
 
 update(DialogueNew)->
-  mnesia:transaction( fun()-> mnesia:write(DialogueNew) end).
+  mnesia:write(DialogueNew).
 
 %%Каскадно удаляет все сообшения из диалога, т.к. сообщения вне диалога не имеют смысла
 delete(#dialogue{messages = _Messages}=Dialogue)->

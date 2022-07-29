@@ -40,4 +40,4 @@ create_tables()->
   end.
 
 wait_tables()->
-  mnesia:wait_for_tables([user],infinity).
+  mnesia:wait_for_tables([user,dialogue,seq,message],infinity).

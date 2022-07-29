@@ -7,7 +7,19 @@
 %%% Created : 28. июль 2022 18:21
 %%%-------------------------------------------------------------------
 -module(message_repo).
--author("aleksandr_work").
+-include("entity.hrl").
 
 %% API
--export([]).
+-export([read/1]).
+
+%%create_table()->
+%%  mnesia:create_table(message,
+%%    [
+%%      {record_name, message},
+%%      {type, set},
+%%      {attributes, record_info(fields, message)},
+%%      {disc_copies, [node()]}
+%%    ]).
+
+read(ID)->
+  mnesia:read(message,ID).

@@ -10,7 +10,7 @@
 -include("entity.hrl").
 
 %% API
--export([create_table/0,write/1,read/1, read_by_User/1]).
+-export([create_table/0,write/1,read/1, read_by_User/1, fetch_messages/1, update/1, delete/1]).
 
 create_table()->
   mnesia:create_table(dialogue,
@@ -30,41 +30,35 @@ write(Dialogue)->
   mnesia:transaction(fun()->mnesia:write(Commited)end).
 
 read(ID)->
-  Transaction = mnesia:transaction(fun()-> mnesia:read(dialogue,ID) end),
-  case Transaction of
-    {atomic, [Dialogue|_]}->Dialogue;
-    {atomic, []}->{error, not_found};
-    {aborted, _Reason}-> {error, _Reason}
-  end.
+  mnesia:read(dialogue,ID).
 
 read_by_User(User)->
-  Transaction = mnesia:transaction(
-    fun()->
-      mnesia:foldl(
-        fun(Dialogue, Res)->
-          case dialogue_service:containsUser(Dialogue,User) of
-            true->
-              [Dialogue|Res];
-            _->
-              Res
-          end
-        end,
-        [],
-        dialogue)
-    end),
-  case Transaction of
-    {atomic,[]}->{error, not_found};
-    {atomic,_Arr}->_Arr;
-    {aborted,_Reason}->{error,_Reason}
-  end.
+   mnesia:foldl(
+    fun(Dialogue, Res)->
+      case dialogue_service:containsUser(Dialogue,User) of
+        true->
+          [Dialogue|Res];
+        _->
+          Res
+      end
+    end,
+    [],
+    dialogue).
+
+fetch_messages(Messages)->
+  lists:foldl(
+    fun(MID,Res)->
+      case message_repo:read(MID) of
+        [] -> Res;
+        M -> [M|Res]
+      end
+    end, [], Messages).
+
 
 update(DialogueNew)->
   mnesia:transaction( fun()-> mnesia:write(DialogueNew) end).
 
 %%Каскадно удаляет все сообшения из диалога, т.к. сообщения вне диалога не имеют смысла
-delete(#dialogue{messages = Messages}=Dialogue)->
-  mnesia:transaction(
-    fun()->
-      %%lists:map(fun(M)->mnesia:delete({message,M}) end,Messages),
-      mnesia:delete({dialogue,Dialogue})
-    end).
+delete(#dialogue{messages = _Messages}=Dialogue)->
+  %%lists:map(fun(M)->mnesia:delete({message,M}) end,Messages),
+  mnesia:delete({dialogue,Dialogue}).

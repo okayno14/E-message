@@ -22,7 +22,11 @@ create_table()->
     ]).
 
 init()->
-  {atomic, ok} = mnesia:transaction(fun()-> mnesia:write(#seq{table_name = dialogue,counter =  0}) end).
+  {atomic, ok} = mnesia:transaction(
+    fun()->
+      mnesia:write(#seq{table_name = dialogue,counter =  0}),
+      mnesia:write(#seq{table_name = message,counter =  0})
+    end).
 
 get_counter(Entity)->
   mnesia:dirty_update_counter(seq,Entity,1).

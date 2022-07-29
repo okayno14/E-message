@@ -23,3 +23,5 @@
 
 -record(create_artifact,{mime,fileName}).
 -record(get_artifact,{id}).
+
+-record(error,{type,msg}).

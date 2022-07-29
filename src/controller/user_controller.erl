@@ -4,19 +4,15 @@
 %%% @doc
 %%%
 %%% @end
-%%% Created : 29. июль 2022 13:01
+%%% Created : 29. июль 2022 13:10
 %%%-------------------------------------------------------------------
--module(user_service).
+-module(user_controller).
 -include("entity.hrl").
-
 
 %% API
 -export([create_user/1]).
 
 create_user(User)->
-  F=
-    fun()->
-      user_repo:write(User)
-    end,
-  transaction:begin_transaction(F).
-
+  Res=user_service:create_user(User),
+  io:format("Controller ok. ~p~n",[Res]),
+  Res.

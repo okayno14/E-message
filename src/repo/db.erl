@@ -33,11 +33,17 @@ create_schema()->
 create_tables()->
   case user_repo:create_table() of
     {atomic,_}->
-      io:format("need more tables~n"),
+      io:format("Need more tables~n"),
+      seq:create_table(),
+      mnesia:wait_for_tables([seq],infinity),
+      seq:init(),
+      dialogue_repo:create_table(),
+      message_repo:create_table(),
       ok;
     {aborted,_Reason}->
+      io:format("No need in creation~n"),
       ok
   end.
 
 wait_tables()->
-  mnesia:wait_for_tables([user,dialogue,seq,message],infinity).
+  mnesia:wait_for_tables([user,seq,dialogue,message],infinity).

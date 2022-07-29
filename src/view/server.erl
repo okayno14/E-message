@@ -9,6 +9,7 @@
 -module(server).
 -include("jsonerl/jsonerl.hrl").
 -include("request.hrl").
+-include("entity.hrl").
 %% API
 -export([start/0, wait_request/1]).
 
@@ -52,10 +53,27 @@ loop(Socket)->
   end.
 
 %%обработка клиентских запросов
-process_request(_Socket, Request)->
+process_request(Socket, Request)->
+  [Fun,ArgsJSON]=parseRequest(Request),
+  case Fun of
+    create_user->
+      Args = ?json_to_record(create_user,ArgsJSON),
+      #create_user{nick = Nick,pass = Pass} = Args,
+      User = #user{nick = Nick,pass = Pass},
+      io:format("Parsed User:~n~p~n",[User]),
+      case user_controller:create_user(User) of
+        {error,_Reason}->
+          ErrorMsg = #error{type = error, msg = _Reason},
+          gen_tcp:send(Socket,?record_to_json(error,ErrorMsg));
+        _User_P->
+          gen_tcp:send(Socket,?record_to_json(user,_User_P))
+      end
+  end.
+
+
+parseRequest(Request)->
   [Fun, ArgsJSON]=string:split(Request,"\n\n"),
-  io:format("~p~n~p~n",[Fun, ArgsJSON]),
-  Args=?json_to_record(hello, ArgsJSON),
-  Res = Args#hello.x+Args#hello.y,
-  io:format("~w~n",[Res]).
+  FunA=list_to_atom(Fun),
+  io:format("Parsed data: ~n~p~n~p~n",[FunA,ArgsJSON]),
+  [FunA,ArgsJSON].
 

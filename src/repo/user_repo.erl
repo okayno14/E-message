@@ -23,7 +23,9 @@ create_table()->
 
 write(User)->
   case read(User#user.nick) of
-    []-> mnesia:write(User);
+    []->
+      mnesia:write(User),
+      User;
     _Obj->transaction:abort_transaction(already_exists)
   end.
 
@@ -38,9 +40,8 @@ read(Nick,Pass)->
   end.
 
 update(UserNew) ->
-  mnesia:transaction(fun()-> mnesia:write(UserNew) end).
+  mnesia:write(UserNew).
 
 delete(User) ->
   Nick = User#user.nick,
-  io:format("~p~n",[Nick]),
-  mnesia:transaction(fun()-> mnesia:delete({user,Nick}) end).
+  mnesia:delete({user,Nick}).

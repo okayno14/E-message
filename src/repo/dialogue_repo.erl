@@ -58,6 +58,6 @@ update(DialogueNew)->
   mnesia:write(DialogueNew).
 
 %%Каскадно удаляет все сообшения из диалога, т.к. сообщения вне диалога не имеют смысла
-delete(#dialogue{messages = _Messages}=Dialogue)->
-  %%lists:map(fun(M)->mnesia:delete({message,M}) end,Messages),
+delete(#dialogue{messages = Messages}=Dialogue)->
+  lists:map(fun(M)->message_repo:delete(M) end, Messages),
   mnesia:delete({dialogue,Dialogue}).

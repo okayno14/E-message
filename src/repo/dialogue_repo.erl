@@ -44,11 +44,8 @@ read_by_User(User)->
         fun(Dialogue, Res)->
           case dialogue_service:containsUser(Dialogue,User) of
             true->
-              L=[Dialogue|Res],
-              io:format("Current Res:~p~n",[L]),
-              L;
+              [Dialogue|Res];
             _->
-              io:format("Current Res:~p~n",[Res]),
               Res
           end
         end,
@@ -60,3 +57,14 @@ read_by_User(User)->
     {atomic,_Arr}->_Arr;
     {aborted,_Reason}->{error,_Reason}
   end.
+
+update(DialogueNew)->
+  mnesia:transaction( fun()-> mnesia:write(DialogueNew) end).
+
+%%Каскадно удаляет все сообшения из диалога, т.к. сообщения вне диалога не имеют смысла
+delete(#dialogue{messages = Messages}=Dialogue)->
+  mnesia:transaction(
+    fun()->
+      %%lists:map(fun(M)->mnesia:delete({message,M}) end,Messages),
+      mnesia:delete({dialogue,Dialogue})
+    end).

@@ -22,7 +22,7 @@ create_table()->
     ]).
 
 init()->
-  {atomic, ok} = mnesia:transaction(
+  {ok} = transaction:begin_transaction/1(
     fun()->
       mnesia:write(#seq{table_name = dialogue,counter =  0}),
       mnesia:write(#seq{table_name = message,counter =  0})

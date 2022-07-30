@@ -36,9 +36,6 @@ get_dialogues(U)->
     end,
   service:extract_values(transaction:begin_transaction(F)).
 
-containsUser(#dialogue{users = Users}=_Dialogue, #user{nick = Nick2}=_User) ->
-  lists:any(fun(Nick)->Nick=:=Nick2 end,Users).
-
 quit_dialogue(#dialogue{users = Nick_List}=D,#user{nick = Nick}=U)->
   case containsUser(D,U) of
     true->
@@ -62,3 +59,7 @@ delete_dialogue(D)->
       dialogue_repo:delete(D)
     end,
   transaction:begin_transaction(F).
+
+
+containsUser(#dialogue{users = Users}=_Dialogue, #user{nick = Nick2}=_User) ->
+  lists:any(fun(Nick)->Nick=:=Nick2 end,Users).

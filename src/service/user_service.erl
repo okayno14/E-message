@@ -26,11 +26,6 @@ get_user(Nick,Pass)->
       user_repo:read(Nick,Pass)
     end,
   T=transaction:begin_transaction(F),
-  io:format("get_user(Nick,Pass). Repo returned ~p~n",[T]),
-  case T of
-    {error,_Reason}->{error,_Reason};
-    []->{error,not_found};
-    User->User
-  end.
+  service:extract_single_value(T).
 
 

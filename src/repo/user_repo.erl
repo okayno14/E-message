@@ -36,7 +36,7 @@ read(Nick,Pass)->
   U=read(Nick),
   case U of
     [User|_] when User#user.pass =:= Pass->
-      User;
+      [User];
     [User|_] when User#user.pass =/= Pass->
       [];
     [] -> []

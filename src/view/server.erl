@@ -130,6 +130,13 @@ get_dialogues_handler(ArgsJSON,Socket)->
     false->false
   end.
 
-quit_dialogue_handler(ArgsJSON,Socket)->ok.
+%%quit_dialogue_handler(ArgsJSON,Socket)->
+%%  Args = ?json_to_record(quit_dialogue,ArgsJSON),
+%%  #quit_dialogue{id = DID, nick = Nick, pass = Pass}=Args,
+%%  case is_authorised(Nick,Pass,Socket) of
+%%    true->
+%%      _U=#user{nick = Nick,pass = Pass},
+%%    false->false
+%%  end.
 
 

@@ -72,6 +72,21 @@ handle_error(_Reason, Socket)->
   ErrorMsg = #error{type = error, msg = _Reason},
   gen_tcp:send(Socket,?record_to_json(error,ErrorMsg)).
 
+%%Ищет пользователя в базе для проведения авторизации.
+%%В случае успеха возвращает true,
+%%иначе - посылает клиенту ответ и возвращает false
+is_authorised(Nick,Pass,Socket)->
+  case user_controller:get_user(Nick,Pass) of
+    {error,_Reason}->
+      handle_error(_Reason,Socket),
+      false;
+    []->
+      handle_error(not_authorized,Socket),
+      false;
+    _User->
+      true
+  end.
+
 create_user_handler(ArgsJSON, Socket)->
   Args = ?json_to_record(create_user,ArgsJSON),
   #create_user{nick = Nick,pass = Pass} = Args,
@@ -86,17 +101,20 @@ create_user_handler(ArgsJSON, Socket)->
 create_dialogue_handler(ArgsJSON,Socket)->
   Args = ?json_to_record(create_dialogue,ArgsJSON),
   #create_dialogue{nick = Nick, pass=Pass, name = Name, userNicks = UserNicks}=Args,
-  case user_controller:get_user(Nick,Pass) of
-    {error,_Reason}->
-      handle_error(_Reason,Socket);
-    []->
-      handle_error(not_authorized,Socket);
-    _User->
-     _D=#dialogue{name=Name,users = UserNicks},
+
+  case is_authorised(Nick,Pass,Socket) of
+    true->
+      _D=#dialogue{name=Name,users = UserNicks},
       Res=dialogue_controller:create_dialogue(_D),
       case Res of
         {error,_Reason1} -> handle_error(_Reason1,Socket);
         _D_P->gen_tcp:send(Socket,?record_to_json(dialogue,_D_P))
-      end
+      end;
+    _->false
   end.
+
+%%  get_dialogues_handler(ArgsJSON,Socket)->
+%%    Args= ?json_to_record(get_dialogues,ArgsJSON),
+%%    #get_dialogues{nick = Nick,pass = Pass}=Args,
+
 

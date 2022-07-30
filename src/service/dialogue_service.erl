@@ -10,7 +10,7 @@
 -include("entity.hrl").
 
 %% API
--export([containsUser/2,create_dialogue/1]).
+-export([containsUser/2,create_dialogue/1,get_dialogues/1]).
 
 create_dialogue(D)->
   F=
@@ -19,5 +19,15 @@ create_dialogue(D)->
     end,
   transaction:begin_transaction(F).
 
+get_dialogues(U)->
+  F=
+    fun()->
+      dialogue_repo:read_by_User(U)
+    end,
+  transaction:begin_transaction(F).
+
+
 containsUser(#dialogue{users = Users}=_Dialogue, #user{nick = Nick2}=_User) ->
   lists:any(fun(Nick)->Nick=:=Nick2 end,Users).
+
+

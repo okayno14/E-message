@@ -130,4 +130,6 @@ get_dialogues_handler(ArgsJSON,Socket)->
     false->false
   end.
 
+quit_dialogue_handler(ArgsJSON,Socket)->ok.
+
 

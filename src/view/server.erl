@@ -70,9 +70,20 @@ parseRequest(Request)->
   io:format("Parsed data: ~n~p~n~p~n",[FunA,ArgsJSON]),
   [FunA,ArgsJSON].
 
+%%обобщённый обработчик исключений
 handle_error(_Reason, Socket)->
   ErrorMsg = #error{type = error, msg = _Reason},
   gen_tcp:send(Socket,?record_to_json(error,ErrorMsg)).
+
+%%обобщённый обработчик результатов запросов
+%%Res - результат вызова контроллера, ради которого и совершался искомый запрос к серверу
+%%HappyParse - callback-парсер, который превращает Erlang-терм в строку-ответ
+%%Socket - сокет, по которому осуществляется связь с клиентом
+handle_request_result(Res,HappyParse,Socket)->
+  case Res of
+    {error,_R}->handle_error(_R,Socket);
+    OK->gen_tcp:send(Socket,HappyParse(OK))
+  end.
 
 %%Ищет пользователя в базе для проведения авторизации.
 %%В случае успеха возвращает true,
@@ -93,12 +104,11 @@ create_user_handler(ArgsJSON, Socket)->
   Args = ?json_to_record(create_user,ArgsJSON),
   #create_user{nick = Nick,pass = Pass} = Args,
   User = #user{nick = Nick,pass = Pass},
-  case user_controller:create_user(User) of
-    {error,_Reason}->
-      handle_error(_Reason,Socket);
-    _User_P->
-      gen_tcp:send(Socket,?record_to_json(user,_User_P))
-  end.
+  Res=user_controller:create_user(User),
+  handle_request_result(
+    Res,
+    fun(X)-> ?record_to_json(user,X) end,
+    Socket).
 
 create_dialogue_handler(ArgsJSON,Socket)->
   Args = ?json_to_record(create_dialogue,ArgsJSON),
@@ -107,10 +117,9 @@ create_dialogue_handler(ArgsJSON,Socket)->
     true->
       _D=#dialogue{name=Name,users = UserNicks},
       Res=dialogue_controller:create_dialogue(_D),
-      case Res of
-        {error,_Reason1} -> handle_error(_Reason1,Socket);
-        _D_P->gen_tcp:send(Socket,?record_to_json(dialogue,_D_P))
-      end;
+      handle_request_result(Res,
+        fun(X)->?record_to_json(dialogue,X) end,
+        Socket);
     _->false
   end.
 
@@ -121,12 +130,10 @@ get_dialogues_handler(ArgsJSON,Socket)->
     true->
       _U=#user{nick = Nick,pass = Pass},
       Res=dialogue_controller:get_dialogues(_U),
-      case Res of
-        {error,_Reason1}-> handle_error(_Reason1,Socket);
-        _Data->
-          Text = parse:encodeRecordArray(_Data,fun(X)->?record_to_json(dialogue,X) end),
-          gen_tcp:send(Socket,Text)
-      end;
+      handle_request_result(
+        Res,
+        fun(Y)->parse:encodeRecordArray(Y,fun(X)->?record_to_json(dialogue,X) end) end,
+        Socket);
     false->false
   end.
 
@@ -136,6 +143,12 @@ get_dialogues_handler(ArgsJSON,Socket)->
 %%  case is_authorised(Nick,Pass,Socket) of
 %%    true->
 %%      _U=#user{nick = Nick,pass = Pass},
+%%      _D=dialogue_controller:get_dialogue(DID),
+%%      Res = dialogue_controller:quit_dialogue(_D,_U),
+%%      case Res of
+%%        {error,_R}->handle_error(_R,Socket);
+%%        ok->gen_tcp:send(Socket,atom_to_list(ok))
+%%      end;
 %%    false->false
 %%  end.
 

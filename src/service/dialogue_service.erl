@@ -10,7 +10,7 @@
 -include("entity.hrl").
 
 %% API
--export([containsUser/2,create_dialogue/1,get_dialogues/1,delete_dialogue/1,quit_dialogue/2]).
+-export([containsUser/2,create_dialogue/1,get_dialogue/1,get_dialogues/1,delete_dialogue/1,quit_dialogue/2]).
 
 create_dialogue(D)->
   F=
@@ -19,15 +19,13 @@ create_dialogue(D)->
     end,
   transaction:begin_transaction(F).
 
-%%get_dialogue(ID)->
-%%  Fun =
-%%    fun()->
-%%      dialogue_repo:read(ID)
-%%    end,
-%%  Transaction = transaction:begin_transaction(Fun),
-%%  case Transaction of
-%%
-%%  end
+get_dialogue(ID)->
+  Fun =
+    fun()->
+      dialogue_repo:read(ID)
+    end,
+  Transaction = transaction:begin_transaction(Fun),
+  service:extract_single_value(Transaction).
 
 get_dialogues(U)->
   F=

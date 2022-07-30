@@ -11,7 +11,7 @@
 
 
 %% API
--export([create_user/1]).
+-export([create_user/1,get_user/2]).
 
 create_user(User)->
   F=
@@ -19,4 +19,12 @@ create_user(User)->
       user_repo:write(User)
     end,
   transaction:begin_transaction(F).
+
+get_user(Nick,Pass)->
+  F=
+    fun()->
+      user_repo:read(Nick,Pass)
+    end,
+  transaction:begin_transaction(F).
+
 

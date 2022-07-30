@@ -4,16 +4,13 @@
 %%% @doc
 %%%
 %%% @end
-%%% Created : 29. июль 2022 13:10
+%%% Created : 30. июль 2022 10:40
 %%%-------------------------------------------------------------------
--module(user_controller).
+-module(dialogue_controller).
 -include("entity.hrl").
 
 %% API
--export([create_user/1,get_user/2]).
+-export([create_dialogue/1]).
 
-create_user(User)->
-  user_service:create_user(User).
-
-get_user(Nick,Pass)->
-  user_service:get_user(Nick,Pass).
+create_dialogue(Dialogue)->
+  dialogue_service:create_dialogue(Dialogue).

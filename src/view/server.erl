@@ -57,23 +57,48 @@ process_request(Socket, Request)->
   [Fun,ArgsJSON]=parseRequest(Request),
   case Fun of
     create_user->
-      Args = ?json_to_record(create_user,ArgsJSON),
-      #create_user{nick = Nick,pass = Pass} = Args,
-      User = #user{nick = Nick,pass = Pass},
-      io:format("Parsed User:~n~p~n",[User]),
-      case user_controller:create_user(User) of
-        {error,_Reason}->
-          ErrorMsg = #error{type = error, msg = _Reason},
-          gen_tcp:send(Socket,?record_to_json(error,ErrorMsg));
-        _User_P->
-          gen_tcp:send(Socket,?record_to_json(user,_User_P))
-      end
+      create_user_handler(ArgsJSON,Socket);
+    create_dialogue->
+      create_dialogue_handler(ArgsJSON,Socket)
   end.
-
 
 parseRequest(Request)->
   [Fun, ArgsJSON]=string:split(Request,"\n\n"),
   FunA=list_to_atom(Fun),
   io:format("Parsed data: ~n~p~n~p~n",[FunA,ArgsJSON]),
   [FunA,ArgsJSON].
+
+handle_error(_Reason, Socket)->
+  ErrorMsg = #error{type = error, msg = _Reason},
+  gen_tcp:send(Socket,?record_to_json(error,ErrorMsg)).
+
+create_user_handler(ArgsJSON, Socket)->
+  Args = ?json_to_record(create_user,ArgsJSON),
+  #create_user{nick = Nick,pass = Pass} = Args,
+  User = #user{nick = Nick,pass = Pass},
+  io:format("Parsed User:~n~p~n",[User]),
+  case user_controller:create_user(User) of
+    {error,_Reason}->
+      handle_error(_Reason,Socket);
+    _User_P->
+      gen_tcp:send(Socket,?record_to_json(user,_User_P))
+  end.
+
+create_dialogue_handler(ArgsJSON,Socket)->
+  Args = ?json_to_record(create_dialogue,ArgsJSON),
+  #create_dialogue{nick = Nick, pass=Pass, name = Name, userNicks = UserNicks}=Args,
+  case user_controller:get_user(Nick,Pass) of
+    {error,_Reason}->
+      handle_error(_Reason,Socket);
+    []->
+      handle_error(not_authorized,Socket);
+    _User->
+     _D=#dialogue{name=Name,users = UserNicks},
+      Res=dialogue_controller:create_dialogue(_D),
+      io:format("~p~n",[Res]),
+      case Res of
+        {error,_Reason1} -> handle_error(_Reason1,Socket);
+        _D_P->gen_tcp:send(Socket,?record_to_json(dialogue,_D_P))
+      end
+  end.
 

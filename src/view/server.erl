@@ -101,7 +101,6 @@ create_user_handler(ArgsJSON, Socket)->
 create_dialogue_handler(ArgsJSON,Socket)->
   Args = ?json_to_record(create_dialogue,ArgsJSON),
   #create_dialogue{nick = Nick, pass=Pass, name = Name, userNicks = UserNicks}=Args,
-
   case is_authorised(Nick,Pass,Socket) of
     true->
       _D=#dialogue{name=Name,users = UserNicks},
@@ -113,8 +112,17 @@ create_dialogue_handler(ArgsJSON,Socket)->
     _->false
   end.
 
-%%  get_dialogues_handler(ArgsJSON,Socket)->
+%%get_dialogues_handler(ArgsJSON,Socket)->
 %%    Args= ?json_to_record(get_dialogues,ArgsJSON),
 %%    #get_dialogues{nick = Nick,pass = Pass}=Args,
+%%    case is_authorised(Nick,Pass,Socket) of
+%%      true->
+%%        _U=#user{nick = Nick,pass = Pass},
+%%        Res=dialogue_controller:get_dialogues(_U),
+%%        case Res of
+%%          {error,_Reason1}-> handle_error(_Reason1,Socket);
+%%          _D
+%%        end
+%%    end
 
 

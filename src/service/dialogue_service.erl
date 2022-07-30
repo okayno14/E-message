@@ -24,7 +24,9 @@ get_dialogues(U)->
     fun()->
       dialogue_repo:read_by_User(U)
     end,
-  transaction:begin_transaction(F).
+  case transaction:begin_transaction(F) of
+    []->{error,not_found}
+  end.
 
 
 containsUser(#dialogue{users = Users}=_Dialogue, #user{nick = Nick2}=_User) ->

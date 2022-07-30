@@ -25,6 +25,12 @@ get_user(Nick,Pass)->
     fun()->
       user_repo:read(Nick,Pass)
     end,
-  transaction:begin_transaction(F).
+  T=transaction:begin_transaction(F),
+  io:format("get_user(Nick,Pass). Repo returned ~p~n",[T]),
+  case T of
+    []->{error,not_found};
+    {error,_Reason}->{error,_Reason};
+    User->User
+  end.
 
 

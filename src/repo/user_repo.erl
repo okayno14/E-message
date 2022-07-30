@@ -35,10 +35,10 @@ read(Nick)->
 read(Nick,Pass)->
   U=read(Nick),
   case U of
-    User when User#user.pass =:= Pass->
+    [User|_] when User#user.pass =:= Pass->
       User;
-    User when User#user.pass =/= Pass->
-      {error,not_found};
+    [User|_] when User#user.pass =/= Pass->
+      [];
     _Any -> _Any
   end.
 

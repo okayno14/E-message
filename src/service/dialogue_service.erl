@@ -19,14 +19,15 @@ create_dialogue(D)->
     end,
   transaction:begin_transaction(F).
 
-%%в разработке
 get_dialogues(U)->
   F=
     fun()->
       dialogue_repo:read_by_User(U)
     end,
   case transaction:begin_transaction(F) of
-    []->{error,not_found}
+    {error,_Reason}->{error,_Reason};
+    []->{error,not_found};
+    Res->Res
   end.
 
 

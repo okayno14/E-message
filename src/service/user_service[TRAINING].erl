@@ -13,7 +13,7 @@
 -include("request.hrl").
 
 %% API
--export([create/0, create_tables/0,read/0,update/0,delete/0,record_to_json/0, json_to_record/0]).
+-export([create/0, create_tables/0,read/0,update/0,delete/0,record_to_json/0, json_to_record/0,list_of_records_to_json/0]).
 
 create()->
   start_db(),
@@ -51,13 +51,30 @@ delete()->
   io:format("Object vasya228 deleted~n").
 
 record_to_json()->
-  start_db(),
-  wait_for_init(),
   Obj=#user{nick = <<"okayno14">>,lastname = <<"Alekseev">>, firstname = <<"Александр"/utf8>>},
   Json=?record_to_json(user,Obj),
   io:format("Json presentation in Erlang: ~p~n",[Json]),
   {ok,File} = file:open("vasya228.json",[write]),
   ok = file:write(File,Json),
+  file:close(File).
+
+iter([H],Res,Conv)->
+  JSON=Conv(H),
+  lists:reverse([JSON|Res]);
+iter([H|T],Res,Conv)->
+  JSON=Conv(H),
+  Put=[JSON|","],
+  iter(T,[Put|Res],Conv).
+
+
+list_of_records_to_json()->
+  Obj=#user{nick = <<"okayno14">>,lastname = <<"Alekseev">>, firstname = <<"Александр"/utf8>>},
+  List=[Obj,Obj,Obj],
+  JSON_List= iter(List,[],fun(X)-> ?record_to_json(user,X) end),
+  Res= ["{[" | [JSON_List|"]}"]],
+
+  {ok,File}=file:open("userList.json",[write]),
+  ok=file:write(File,Res),
   file:close(File).
 
 json_to_record()->

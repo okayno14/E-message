@@ -39,7 +39,7 @@ read(Nick,Pass)->
       User;
     [User|_] when User#user.pass =/= Pass->
       [];
-    _Any -> _Any
+    [] -> []
   end.
 
 update(UserNew) ->

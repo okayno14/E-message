@@ -19,6 +19,7 @@ create_dialogue(D)->
     end,
   transaction:begin_transaction(F).
 
+%%в разработке
 get_dialogues(U)->
   F=
     fun()->

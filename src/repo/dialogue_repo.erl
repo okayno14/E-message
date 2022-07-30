@@ -50,7 +50,7 @@ fetch_messages(Messages)->
     fun(MID,Res)->
       case message_repo:read(MID) of
         [] -> Res;
-        M -> [M|Res]
+        [M|_] -> [M|Res]
       end
     end, [], Messages).
 

@@ -28,8 +28,8 @@ get_user(Nick,Pass)->
   T=transaction:begin_transaction(F),
   io:format("get_user(Nick,Pass). Repo returned ~p~n",[T]),
   case T of
-    []->{error,not_found};
     {error,_Reason}->{error,_Reason};
+    []->{error,not_found};
     User->User
   end.
 

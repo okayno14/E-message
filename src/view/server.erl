@@ -76,7 +76,6 @@ create_user_handler(ArgsJSON, Socket)->
   Args = ?json_to_record(create_user,ArgsJSON),
   #create_user{nick = Nick,pass = Pass} = Args,
   User = #user{nick = Nick,pass = Pass},
-  io:format("Parsed User:~n~p~n",[User]),
   case user_controller:create_user(User) of
     {error,_Reason}->
       handle_error(_Reason,Socket);
@@ -95,7 +94,6 @@ create_dialogue_handler(ArgsJSON,Socket)->
     _User->
      _D=#dialogue{name=Name,users = UserNicks},
       Res=dialogue_controller:create_dialogue(_D),
-      io:format("~p~n",[Res]),
       case Res of
         {error,_Reason1} -> handle_error(_Reason1,Socket);
         _D_P->gen_tcp:send(Socket,?record_to_json(dialogue,_D_P))

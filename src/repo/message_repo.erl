@@ -25,7 +25,8 @@ write(Message)->
   ID = seq:get_counter(seq),
   Commited=Message#message{id=ID},
   mnesia:write(Commited),
-  mnesia:read(message,ID).
+  [Obj|_]=mnesia:read(message,ID),
+  Obj.
 
 read(ID)->
   mnesia:read(message,ID).

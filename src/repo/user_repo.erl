@@ -33,16 +33,7 @@ read(Nick)->
   mnesia:read(user,Nick).
 
 read(Nick,Pass)->
-  io:format("{nick=~w,pass=~w}~n",[Nick,Pass]),
   U=read(Nick),
-  io:format("finded User:~p~n",[U]),
-%%  case U of
-%%    User when User#user.pass =:= Pass ->
-%%      User;
-%%    {error,_Reason}->{error,_Reason};
-%%    _->
-%%      {error,not_found}
-%%  end.
   case U of
     User when User#user.pass =:= Pass->
       User;

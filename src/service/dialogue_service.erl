@@ -14,6 +14,7 @@
         get_dialogue/1,
         get_dialogues/1,
         quit_dialogue/2,
+        get_messages/1,
         add_message/2,
         delete_dialogue/1]).
 
@@ -38,6 +39,13 @@ get_dialogues(U)->
     fun()->
       dialogue_repo:read_by_User(U)
     end,
+  service:extract_values(transaction:begin_transaction(F)).
+
+get_messages(D)->
+  F=
+  fun()->
+    dialogue_repo:fetch_messages(D)
+  end,
   service:extract_values(transaction:begin_transaction(F)).
 
 quit_dialogue(#dialogue{users = Nick_List}=D,#user{nick = Nick}=U)->

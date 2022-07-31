@@ -45,7 +45,7 @@ read_by_User(User)->
     [],
     dialogue).
 
-fetch_messages(Messages)->
+fetch_messages(#dialogue{messages = Messages}=_D)->
   lists:foldl(
     fun(MID,Res)->
       case message_repo:read(MID) of

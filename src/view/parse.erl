@@ -18,7 +18,7 @@
 %%Encode(type:atom, Rec), где: type - имя записи, Rec - запись
 encodeRecordArray(Data,Encode)->
   JSON_List=encodeRecordArray(Data,[],Encode),
-  ["{[" | [JSON_List|"]}"]].
+  ["{\"arr:\"[" | [JSON_List|"]}"]].
 
 encodeRecordArray([H],Res,Encode)->
   JSON=Encode(H),

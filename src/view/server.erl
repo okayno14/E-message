@@ -70,7 +70,9 @@ process_request(Socket, Request)->
     quit_dialogue->
       quit_dialogue_handler(ArgsJSON,Socket);
     send_message->
-      send_message_handler(ArgsJSON,Socket)
+      send_message_handler(ArgsJSON,Socket);
+    get_messages->
+      get_messages_handler(ArgsJSON,Socket)
   end.
 
 parseRequest(Request)->
@@ -191,6 +193,25 @@ send_message_handler(ArgsJSON, Socket)->
           Res = dialogue_controller:add_message(D,M),
           io:format("TRACE server:send_message_handler/2 Controller's res:~p~n",[Res]),
           handle_request_result(Res,fun(X)-> ?record_to_json(message,X) end,Socket)
+      end;
+    false->ok
+  end.
+
+get_messages_handler(ArgsJSON, Socket)->
+  Args = ?json_to_record(get_messages,ArgsJSON),
+  #get_messages{nick = Nick, pass=Pass, id = DID}=Args,
+  case is_authorised(Nick,Pass,Socket) of
+    true->
+      D=dialogue_controller:get_dialogue(DID),
+      case D of
+        {error,_R}->
+          handle_error(_R,Socket);
+        D->
+          Res = dialogue_controller:get_messages(D),
+          handle_request_result(
+            Res,
+            fun(Y)->parse:encodeRecordArray(Y,fun(X)->?record_to_json(message,X) end) end,
+            Socket)
       end;
     false->ok
   end.

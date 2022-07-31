@@ -71,6 +71,8 @@ process_request(Socket, Request)->
       quit_dialogue_handler(ArgsJSON,Socket);
     send_message->
       send_message_handler(ArgsJSON,Socket);
+    get_message->
+      get_message_handler(ArgsJSON,Socket);
     get_messages->
       get_messages_handler(ArgsJSON,Socket)
   end.
@@ -195,6 +197,19 @@ send_message_handler(ArgsJSON, Socket)->
           handle_request_result(Res,fun(X)-> ?record_to_json(message,X) end,Socket)
       end;
     false->ok
+  end.
+
+get_message_handler(ArgsJSON, Socket)->
+  Args = ?json_to_record(get_message,ArgsJSON),
+  #get_message{nick = Nick,pass = Pass, id = MID}=Args,
+  case is_authorised(Nick,Pass,Socket) of
+    true->
+      handle_request_result(
+        dialogue_controller:get_message(MID),
+        fun(X)-> ?record_to_json(message,X) end,
+        Socket);
+    false->
+      ok
   end.
 
 get_messages_handler(ArgsJSON, Socket)->

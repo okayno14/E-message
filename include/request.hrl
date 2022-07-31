@@ -16,6 +16,7 @@
 -record(quit_dialogue,{nick,pass,id}).
 
 -record(send_message,{nick,pass,text,artifactID, dialogueID}).
+-record(get_message,{nick,pass,id}).
 -record(get_messages,{nick,pass,id}).
 -record(read_message,{nick,pass,id}).
 -record(edit_message,{nick,pass,id,text,artifactID}).

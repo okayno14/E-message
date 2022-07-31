@@ -14,6 +14,7 @@
         get_dialogue/1,
         get_dialogues/1,
         quit_dialogue/2,
+        get_message/1,
         get_messages/1,
         add_message/2,
         delete_dialogue/1]).
@@ -40,6 +41,13 @@ get_dialogues(U)->
       dialogue_repo:read_by_User(U)
     end,
   service:extract_values(transaction:begin_transaction(F)).
+
+get_message(MID)->
+  F=
+  fun()->
+    message_repo:read(MID)
+  end,
+  service:extract_single_value(transaction:begin_transaction(F)).
 
 get_messages(D)->
   F=

@@ -19,6 +19,7 @@
         add_message/2,
         read_message/1,
         change_text/2,
+        delete_message/3,
         delete_dialogue/1]).
 
 create_dialogue(D)->
@@ -118,6 +119,22 @@ change_text(M,Text)->
   end,
   T=transaction:begin_transaction(Fun),
   service:extract_single_value(T).
+
+delete_message(#dialogue{messages = MessageIDS}= D,
+              #message{id = MID,from = Nick}= M,
+              #user{nick = Nick})->
+  F=
+    fun()->
+      MessageIDS_F =lists:filter(fun(ID)-> ID =/= MID end, MessageIDS),
+      dialogue_repo:update(D#dialogue{messages = MessageIDS_F}),
+      message_repo:delete(M)
+    end,
+  transaction:begin_transaction(F);
+
+delete_message(_D,
+              #message{from = _Nick1},
+              #user{nick = _Nick2})->
+  {error,no_right_for_operation}.
 
 delete_dialogue(D)->
   F=fun()->

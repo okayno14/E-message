@@ -78,7 +78,9 @@ process_request(Socket, Request)->
     read_message->
       read_message_handler(ArgsJSON,Socket);
     change_text->
-      change_text_handler(ArgsJSON,Socket)
+      change_text_handler(ArgsJSON,Socket);
+    delete_message->
+      delete_message_handler(ArgsJSON,Socket)
   end.
 
 parseRequest(Request)->
@@ -268,5 +270,29 @@ change_text_handler(ArgsJSON,Socket)->
             fun(X)-> ?record_to_json(message,X) end,
             Socket)
       end;
+    false->ok
+  end.
+
+delete_message_handler(ArgsJSON,Socket)->
+  Args = ?json_to_record(delete_message,ArgsJSON),
+  #delete_message{nick = Nick,pass = Pass,messageID = MID, dialogueID = DID}=Args,
+  case is_authorised(Nick,Pass,Socket) of
+    true->
+      User = #user{nick = Nick,pass = Pass},
+      M=dialogue_controller:get_message(MID),
+      D=dialogue_controller:get_dialogue(DID),
+      if
+        is_record(M,message) and is_record(D,dialogue)->
+          Res = dialogue_controller:delete_message(D,M,User),
+          handle_request_result(
+            Res,
+            fun(X)->atom_to_list(X) end,
+            Socket);
+        element(1,M)=:=error->
+          handle_error(element(2,M),Socket);
+        element(1,D)=:=error->
+          handle_error(element(2,D),Socket)
+      end,
+      ok;
     false->ok
   end.

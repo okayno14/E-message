@@ -35,5 +35,5 @@ update(Message)->
   mnesia:write(Message).
 
 %%Каскадно удаляются артефакты, так как вне сообщений они не имеют смысла
-delete(ID)->
-  mnesia:delete({message,ID}).
+delete(#message{id=MID})->
+  mnesia:delete({message, MID}).

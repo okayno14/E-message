@@ -10,7 +10,7 @@
 -include("entity.hrl").
 
 %% API
--export([containsUser/2,create_dialogue/1,get_dialogue/1,get_dialogues/1,delete_dialogue/1,quit_dialogue/2]).
+-export([create_dialogue/1,get_dialogue/1,get_dialogues/1,delete_dialogue/1,quit_dialogue/2]).
 
 create_dialogue(D)->
   F=
@@ -35,7 +35,7 @@ get_dialogues(U)->
   service:extract_values(transaction:begin_transaction(F)).
 
 quit_dialogue(#dialogue{users = Nick_List}=D,#user{nick = Nick}=U)->
-  case containsUser(D,U) of
+  case dialogue:containsUser(D,U) of
     true->
       io:format("TRACE dialogue_service:quit_dialogue/2 User contains in dialogue~n"),
       if
@@ -55,12 +55,10 @@ quit_dialogue(#dialogue{users = Nick_List}=D,#user{nick = Nick}=U)->
       {error,user_not_found_in_dialogue}
   end.
 
+
+
 delete_dialogue(D)->
   F=fun()->
       dialogue_repo:delete(D)
     end,
   transaction:begin_transaction(F).
-
-
-containsUser(#dialogue{users = Users}=_Dialogue, #user{nick = Nick2}=_User) ->
-  lists:any(fun(Nick)->Nick=:=Nick2 end,Users).

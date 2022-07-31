@@ -10,7 +10,12 @@
 -include("entity.hrl").
 
 %% API
--export([create_dialogue/1,get_dialogue/1,get_dialogues/1,delete_dialogue/1,quit_dialogue/2]).
+-export([create_dialogue/1,
+        get_dialogue/1,
+        get_dialogues/1,
+        quit_dialogue/2,
+        add_message/2,
+        delete_dialogue/1]).
 
 create_dialogue(D)->
   F=
@@ -25,6 +30,7 @@ get_dialogue(ID)->
       dialogue_repo:read(ID)
     end,
   Transaction = transaction:begin_transaction(Fun),
+  io:format("TRACE dialogue_service:get_dialogue/1 Transaction:~p~n",[Transaction]),
   service:extract_single_value(Transaction).
 
 get_dialogues(U)->
@@ -55,7 +61,20 @@ quit_dialogue(#dialogue{users = Nick_List}=D,#user{nick = Nick}=U)->
       {error,user_not_found_in_dialogue}
   end.
 
-
+%%Сохранить в БД сообщение
+%%Добавить полученный ID в диалог
+%%Сохранить диалог
+%%Вовзращает персистентное сообщение
+add_message(D,M)->
+  Fun=
+    fun()->
+      M_Persisted = message_repo:write(M),
+      D_Updated = dialogue:add_message(D,M_Persisted),
+      dialogue_repo:update(D_Updated),
+      message_repo:read(M_Persisted#message.id)
+    end,
+  T = transaction:begin_transaction(Fun),
+  service:extract_single_value(T).
 
 delete_dialogue(D)->
   F=fun()->

@@ -10,7 +10,7 @@
 -record(user,{nick,pass="123qwerty"}).
 -record(dialogue,{id=-1,name,users,messages}).
 %%-enum(message_state,{written, sent, read}).
--record(message,{id=-1,from,timeSending,text,state,artifactID}).
+-record(message,{id=-1,from,timeSending,text,state=written,artifactID}).
 %%-enum(mime,{audio,image,video,application_zip}).
 -record(artifact,{id=-1,mime,path}).
 -record(seq,{table_name,counter=0}).

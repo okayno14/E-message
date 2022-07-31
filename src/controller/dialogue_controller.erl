@@ -18,6 +18,7 @@
         quit_dialogue/2,
         add_message/2,
         read_message/1,
+        change_text/2,
         delete_dialogue/1]).
 
 create_dialogue(Dialogue)->
@@ -43,6 +44,9 @@ add_message(D,M)->
 
 read_message(M)->
   dialogue_service:read_message(M).
+
+change_text(M,Text)->
+  dialogue_service:change_text(M,Text).
 
 delete_dialogue(D)->
   dialogue_service:delete_dialogue(D).

@@ -18,6 +18,7 @@
         get_messages/1,
         add_message/2,
         read_message/1,
+        change_text/2,
         delete_dialogue/1]).
 
 create_dialogue(D)->
@@ -106,6 +107,16 @@ read_message(M)->
     end
   end,
   T = transaction:begin_transaction(Fun),
+  service:extract_single_value(T).
+
+change_text(M,Text)->
+  Fun=
+  fun()->
+    M_Persited = M#message{text = Text},
+    message_repo:update(M_Persited),
+    [M_Persited]
+  end,
+  T=transaction:begin_transaction(Fun),
   service:extract_single_value(T).
 
 delete_dialogue(D)->

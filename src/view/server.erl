@@ -75,7 +75,10 @@ process_request(Socket, Request)->
       get_message_handler(ArgsJSON,Socket);
     get_messages->
       get_messages_handler(ArgsJSON,Socket);
-    read_message->read_message_handler(ArgsJSON,Socket)
+    read_message->
+      read_message_handler(ArgsJSON,Socket);
+    change_text->
+      change_text_handler(ArgsJSON,Socket)
   end.
 
 parseRequest(Request)->
@@ -238,9 +241,28 @@ read_message_handler(ArgsJSON,Socket)->
   case is_authorised(Nick,Pass,Socket) of
     true->
       case dialogue_controller:get_message(MID) of
-        {error,_R}->handle_error(_R,Socket);
+        {error,_R}->
+          handle_error(_R,Socket);
         M->
           Res = dialogue_controller:read_message(M),
+          handle_request_result(
+            Res,
+            fun(X)-> ?record_to_json(message,X) end,
+            Socket)
+      end;
+    false->ok
+  end.
+
+change_text_handler(ArgsJSON,Socket)->
+  Args = ?json_to_record(change_text,ArgsJSON),
+  #change_text{nick = Nick,pass = Pass,id=MID,text = Text}=Args,
+  case is_authorised(Nick,Pass,Socket) of
+    true->
+      case dialogue_controller:get_message(MID) of
+        {error,_R}->
+          handle_error(_R,Socket);
+        M->
+          Res = dialogue_controller:change_text(M,Text),
           handle_request_result(
             Res,
             fun(X)-> ?record_to_json(message,X) end,

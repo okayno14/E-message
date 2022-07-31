@@ -71,6 +71,7 @@ add_message(D,M)->
       M_Persisted = message_repo:write(M),
       D_Updated = dialogue:add_message(D,M_Persisted),
       dialogue_repo:update(D_Updated),
+      message_repo:update(message:change_state(M_Persisted)),
       message_repo:read(M_Persisted#message.id)
     end,
   T = transaction:begin_transaction(Fun),

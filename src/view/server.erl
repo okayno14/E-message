@@ -10,16 +10,20 @@
 -include("jsonerl/jsonerl.hrl").
 -include("request.hrl").
 -include("entity.hrl").
+-include("config.hrl").
 %% API
 -export([start/0, wait_request/1]).
 
 start() ->
   db:start_db(),
-  case  gen_tcp:listen(5560,[{active, false}]) of
+  {ok,Text_Bin}=file:read_file("priv/etc/config.json"),
+  Conf=?json_to_record(config,Text_Bin),
+  #config{port = Port,acceptors_quantity = N}=Conf,
+  case  gen_tcp:listen(Port,[{active, false}]) of
     {ok, ListenSocket}->
-      io:format("INFO server:start/0 Server started. Port=~w~n",[5560]),
-      start_servers(8,ListenSocket),
-      io:format("INFO server:start/0 Started ~w acceptors~n",[8]),
+      io:format("INFO server:start/0 Server started. Port=~w~n",[Port]),
+      start_servers(N,ListenSocket),
+      io:format("INFO server:start/0 Started ~w acceptors~n",[N]),
       %%замораживает listen-процесс
       timer:sleep(infinity);
     {error, Reason}->

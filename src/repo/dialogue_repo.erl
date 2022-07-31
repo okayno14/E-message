@@ -59,6 +59,17 @@ update(DialogueNew)->
   mnesia:write(DialogueNew).
 
 %%Каскадно удаляет все сообшения из диалога, т.к. сообщения вне диалога не имеют смысла
-delete(#dialogue{messages = Messages}=Dialogue)->
-  lists:map(fun(M)->message_repo:delete(M) end, Messages),
-  mnesia:delete({dialogue,Dialogue}).
+delete(#dialogue{id=ID,messages = Messages})->
+  io:format("TRACE dialogue_repo:delete/1 id=~p, messages=~p~n",[ID,Messages]),
+  case Messages of
+    undefined->
+      io:format("TRACE dialogue_repo:delete/1 Dialogue messages undefined~n"),
+      mnesia:delete({dialogue,ID});
+    []->
+      io:format("TRACE dialogue_repo:delete/1 Dialogue hasn't messages~n"),
+      mnesia:delete({dialogue,ID});
+    Messages->
+      io:format("TRACE dialogue_repo:delete/1 Dialogue has messages~n"),
+      lists:map(fun(M)->message_repo:delete(M) end, Messages),
+      mnesia:delete({dialogue,ID})
+  end.

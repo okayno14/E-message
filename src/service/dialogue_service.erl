@@ -37,19 +37,22 @@ get_dialogues(U)->
 quit_dialogue(#dialogue{users = Nick_List}=D,#user{nick = Nick}=U)->
   case containsUser(D,U) of
     true->
+      io:format("TRACE dialogue_service:quit_dialogue/2 User contains in dialogue~n"),
       if
         length(Nick_List) =:= 1 ->
-          delete_dialogue(D);
+          T=delete_dialogue(D),
+          io:format("TRACE dialogue_service:quit_dialogue/2 Delete transaction:~p~n",[T]),
+          T;
         length(Nick_List) >1 ->
           Arr = lists:filter(fun(Elem)-> Elem =/= Nick end, Nick_List),
           D1=D#dialogue{users = Arr},
           Fun=fun()-> dialogue_repo:update(D1) end,
-          case transaction:begin_transaction(Fun) of
-            {error,_R}->{error,_R};
-            ok->D1
-          end
+          T1=transaction:begin_transaction(Fun),
+          io:format("TRACE dialogue_service:quit_dialogue/2 Update transaction:~p~n",[T1]),
+          T1
       end;
-    false->{error,user_not_found_in_dialogue}
+    false->
+      {error,user_not_found_in_dialogue}
   end.
 
 delete_dialogue(D)->

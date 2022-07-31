@@ -17,17 +17,19 @@ start() ->
   db:start_db(),
   case  gen_tcp:listen(5560,[{active, false}]) of
     {ok, ListenSocket}->
-      io:format("~w Acceptors will spawn~n",[8]),
+      io:format("INFO server:start/0 Server started. Port=~w~n",[5560]),
       start_servers(8,ListenSocket),
+      io:format("INFO server:start/0 Started ~w acceptors~n",[8]),
       %%замораживает listen-процесс
       timer:sleep(infinity);
-    {error, Reason}->io:format("Error, can't listen port ~w~n", [Reason])
+    {error, Reason}->
+      io:format("FATAL Can't listen port.~n~p~n",[Reason])
   end.
 
 start_servers(0,_)-> ok;
 start_servers(Num, ListenSocket)->
   spawn(?MODULE,wait_request,[ListenSocket]),
-  io:format("Acceptor#~w spawned~n",[Num]),
+  io:format("INFO server:start_servers/2 Acceptor#~w spawned~n",[Num]),
   start_servers(Num-1,ListenSocket).
 
 wait_request(ListenSocket)->
@@ -35,7 +37,8 @@ wait_request(ListenSocket)->
     {ok, Socket} ->
       loop(Socket),
       wait_request(ListenSocket);
-    {error, Reason}->io:format("Error, can't accept request. ~w~n",[Reason])
+    {error, Reason}->
+      io:format("ERROR server:wait_request Socket ~w [~w] can't accept session. Reason:~p~n",[ListenSocket, self(),Reason])
   end.
 
 %%функция-цикл работы потока-акцептора
@@ -43,12 +46,11 @@ loop(Socket)->
   inet:setopts(Socket,[{active,once}]),
   receive
     {tcp,Socket,Request}->
-      io:format("Socket ~w [~w] received request ~n", [Socket, self()]),
-      io:format("Requset data: ~p~n", [Request]),
+      io:format("INFO server:loop/1 Socket ~w [~w] received request ~n", [Socket, self()]),
       process_request(Socket,Request),
       loop(Socket);
     {tcp_closed,Socket}->
-      io:format("Socket ~w closed [~w]~n",[Socket,self()]),
+      io:format("INFO server:loop/1 Socket ~w closed [~w]~n",[Socket,self()]),
       ok
   end.
 
@@ -61,13 +63,15 @@ process_request(Socket, Request)->
     create_dialogue->
       create_dialogue_handler(ArgsJSON,Socket);
     get_dialogues->
-      get_dialogues_handler(ArgsJSON,Socket)
+      get_dialogues_handler(ArgsJSON,Socket);
+    quit_dialogue->
+      quit_dialogue_handler(ArgsJSON,Socket)
   end.
 
 parseRequest(Request)->
   [Fun, ArgsJSON]=string:split(Request,"\n\n"),
   FunA=list_to_atom(Fun),
-  io:format("Parsed data: ~n~p~n~p~n",[FunA,ArgsJSON]),
+  io:format("TRACE server:parseRequest/1 Req data: ~n~p~n~p~n",[FunA,ArgsJSON]),
   [FunA,ArgsJSON].
 
 %%обобщённый обработчик исключений
@@ -120,7 +124,8 @@ create_dialogue_handler(ArgsJSON,Socket)->
       handle_request_result(Res,
         fun(X)->?record_to_json(dialogue,X) end,
         Socket);
-    _->false
+    false->
+      handle_error(not_authorised,Socket)
   end.
 
 get_dialogues_handler(ArgsJSON,Socket)->
@@ -134,22 +139,35 @@ get_dialogues_handler(ArgsJSON,Socket)->
         Res,
         fun(Y)->parse:encodeRecordArray(Y,fun(X)->?record_to_json(dialogue,X) end) end,
         Socket);
-    false->false
+    false->
+      handle_error(not_authorised,Socket)
   end.
 
-%%quit_dialogue_handler(ArgsJSON,Socket)->
-%%  Args = ?json_to_record(quit_dialogue,ArgsJSON),
-%%  #quit_dialogue{id = DID, nick = Nick, pass = Pass}=Args,
-%%  case is_authorised(Nick,Pass,Socket) of
-%%    true->
-%%      _U=#user{nick = Nick,pass = Pass},
-%%      _D=dialogue_controller:get_dialogue(DID),
-%%      Res = dialogue_controller:quit_dialogue(_D,_U),
-%%      case Res of
-%%        {error,_R}->handle_error(_R,Socket);
-%%        ok->gen_tcp:send(Socket,atom_to_list(ok))
-%%      end;
-%%    false->false
-%%  end.
+quit_dialogue_handler(ArgsJSON,Socket)->
+  Args = ?json_to_record(quit_dialogue,ArgsJSON),
+  #quit_dialogue{nick = Nick, pass = Pass, id=_ID}=Args,
+  DID = binary_to_integer(_ID),
+  io:format("TRACE server:quit_dialogue_handler/2 parsed User:~p ~p~n",[Nick,Pass]),
+  io:format("TRACE server:quit_dialogue_handler/2 parsed dialID: ~p~n",[DID]),
+  case is_authorised(Nick,Pass,Socket) of
+    true->
+      io:format("TRACE server:quit_dialogue_handler/2 User authorised~n"),
+      _U=#user{nick = Nick,pass = Pass},
+      D=dialogue_controller:get_dialogue(DID),
+      io:format("TRACE server:quit_dialogue_handler/2 Finded Dialogue:~p~n",[D]),
+      case D of
+        {error,_R}->
+          handle_error(_R,Socket);
+        D->
+          Res = dialogue_controller:quit_dialogue(D,_U),
+          handle_request_result(
+            Res,
+            fun(X)->atom_to_list(X) end,
+            Socket)
+      end;
+    false->
+      io:format("TRACE server:quit_dialogue_handler/2 User not_authorised~n"),
+      handle_error(not_authorised,Socket)
+  end.
 
 

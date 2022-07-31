@@ -10,10 +10,19 @@
 -include("entity.hrl").
 
 %% API
--export([change_state/1]).
+-export([read/1,send/1]).
 
-change_state(#message{state = State}=M)->
-  case State of
-    written->M#message{state = sent};
-    sent->M#message{state = read}
-  end.
+%%КА:
+%% символы входного алфавита - функции ЯП
+%% состояния - поле записи
+%% отображение входа, состояния на новое состояние - функции ЯП
+
+read(#message{state = sent}=M)->
+  M#message{state = read};
+read(#message{state = _})->
+  {error,not_allowed_for_current_state}.
+
+send(#message{state=written}=M)->
+  M#message{state = sent};
+send(#message{state = _})->
+  {error,not_allowed_for_current_state}.

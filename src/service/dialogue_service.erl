@@ -17,6 +17,7 @@
         get_message/1,
         get_messages/1,
         add_message/2,
+        read_message/1,
         delete_dialogue/1]).
 
 create_dialogue(D)->
@@ -87,9 +88,23 @@ add_message(D,M)->
       M_Persisted = message_repo:write(M),
       D_Updated = dialogue:add_message(D,M_Persisted),
       dialogue_repo:update(D_Updated),
-      message_repo:update(message:change_state(M_Persisted)),
+      message_repo:update(message:send(M_Persisted)),
       message_repo:read(M_Persisted#message.id)
     end,
+  T = transaction:begin_transaction(Fun),
+  service:extract_single_value(T).
+
+read_message(M)->
+  Fun=
+  fun()->
+    case message:read(M) of
+      {error,_R}->
+        transaction:abort_transaction(_R);
+      M_Persisted->
+        message_repo:update(M_Persisted),
+        [M_Persisted]
+    end
+  end,
   T = transaction:begin_transaction(Fun),
   service:extract_single_value(T).
 

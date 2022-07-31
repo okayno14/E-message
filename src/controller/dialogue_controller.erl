@@ -17,6 +17,7 @@
         get_messages/1,
         quit_dialogue/2,
         add_message/2,
+        read_message/1,
         delete_dialogue/1]).
 
 create_dialogue(Dialogue)->
@@ -39,6 +40,9 @@ get_messages(D)->
 
 add_message(D,M)->
   dialogue_service:add_message(D,M).
+
+read_message(M)->
+  dialogue_service:read_message(M).
 
 delete_dialogue(D)->
   dialogue_service:delete_dialogue(D).

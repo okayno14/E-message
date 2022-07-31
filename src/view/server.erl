@@ -74,7 +74,8 @@ process_request(Socket, Request)->
     get_message->
       get_message_handler(ArgsJSON,Socket);
     get_messages->
-      get_messages_handler(ArgsJSON,Socket)
+      get_messages_handler(ArgsJSON,Socket);
+    read_message->read_message_handler(ArgsJSON,Socket)
   end.
 
 parseRequest(Request)->
@@ -226,6 +227,23 @@ get_messages_handler(ArgsJSON, Socket)->
           handle_request_result(
             Res,
             fun(Y)->parse:encodeRecordArray(Y,fun(X)->?record_to_json(message,X) end) end,
+            Socket)
+      end;
+    false->ok
+  end.
+
+read_message_handler(ArgsJSON,Socket)->
+  Args = ?json_to_record(read_message,ArgsJSON),
+  #read_message{nick = Nick,pass = Pass, id = MID}=Args,
+  case is_authorised(Nick,Pass,Socket) of
+    true->
+      case dialogue_controller:get_message(MID) of
+        {error,_R}->handle_error(_R,Socket);
+        M->
+          Res = dialogue_controller:read_message(M),
+          handle_request_result(
+            Res,
+            fun(X)-> ?record_to_json(message,X) end,
             Socket)
       end;
     false->ok

@@ -1573,7 +1573,7 @@
 <XPD:REF name="Incomings[0]">gAjKjrshA0a3VSthwwEnUAAA</XPD:REF>
 </XPD:OBJ>
 <XPD:OBJ name="Subvertices[2]" type="UMLCompositeState" guid="Q6v12364kE6/aEy0eFdaMQAA">
-<XPD:ATTR name="Name" type="string">writed</XPD:ATTR>
+<XPD:ATTR name="Name" type="string">written</XPD:ATTR>
 <XPD:REF name="ContainerState">bIZP1W8hBUab+dOkD7QUDAAA</XPD:REF>
 <XPD:ATTR name="#Views" type="integer">2</XPD:ATTR>
 <XPD:REF name="Views[0]">OhxJGf+Xy0WipKaJzUOIqgAA</XPD:REF>
@@ -1584,7 +1584,7 @@
 <XPD:REF name="Incomings[0]">LEyDNubJa0+90Dx1Gs4biwAA</XPD:REF>
 </XPD:OBJ>
 <XPD:OBJ name="Subvertices[3]" type="UMLCompositeState" guid="oNoHjNbVlEWEc8k19uuf1AAA">
-<XPD:ATTR name="Name" type="string">sended</XPD:ATTR>
+<XPD:ATTR name="Name" type="string">sent</XPD:ATTR>
 <XPD:REF name="ContainerState">bIZP1W8hBUab+dOkD7QUDAAA</XPD:REF>
 <XPD:ATTR name="#Views" type="integer">2</XPD:ATTR>
 <XPD:REF name="Views[0]">Tnb1Hvj6JEWzPLvPOHMSoAAA</XPD:REF>
@@ -1595,7 +1595,7 @@
 <XPD:REF name="Incomings[0]">jLRX6iizHkCXG3S7gmpB8QAA</XPD:REF>
 </XPD:OBJ>
 <XPD:OBJ name="Subvertices[4]" type="UMLCompositeState" guid="YneVwugWWEy0Mf6HzSoF3QAA">
-<XPD:ATTR name="Name" type="string">readed</XPD:ATTR>
+<XPD:ATTR name="Name" type="string">read</XPD:ATTR>
 <XPD:REF name="ContainerState">bIZP1W8hBUab+dOkD7QUDAAA</XPD:REF>
 <XPD:ATTR name="#Views" type="integer">2</XPD:ATTR>
 <XPD:REF name="Views[0]">Cz88Xi91uke+wVdJkqzz/AAA</XPD:REF>
@@ -1646,7 +1646,7 @@
 <XPD:OBJ name="NameCompartment" type="UMLNameCompartmentView" guid="XsLf0oPDFkeK0xYDo+mevwAA">
 <XPD:OBJ name="NameLabel" type="LabelView" guid="fCrw8ObHLEuzAKZvv2Z8NgAA">
 <XPD:ATTR name="Width" type="integer">50</XPD:ATTR>
-<XPD:ATTR name="Text" type="string">writed</XPD:ATTR>
+<XPD:ATTR name="Text" type="string">written</XPD:ATTR>
 </XPD:OBJ>
 <XPD:OBJ name="StereotypeLabel" type="LabelView" guid="eAgfoOwjckKvck3QBaOevwAA">
 <XPD:ATTR name="Visible" type="boolean">False</XPD:ATTR>
@@ -1672,7 +1672,7 @@
 <XPD:OBJ name="NameCompartment" type="UMLNameCompartmentView" guid="+K/mOLBZqEChuaJyK6exmQAA">
 <XPD:OBJ name="NameLabel" type="LabelView" guid="FILvVRIvMkWJD3MweU3oeQAA">
 <XPD:ATTR name="Width" type="integer">50</XPD:ATTR>
-<XPD:ATTR name="Text" type="string">sended</XPD:ATTR>
+<XPD:ATTR name="Text" type="string">sent</XPD:ATTR>
 </XPD:OBJ>
 <XPD:OBJ name="StereotypeLabel" type="LabelView" guid="hj6nBwWXt0G2C0pOB1j3HwAA">
 <XPD:ATTR name="Visible" type="boolean">False</XPD:ATTR>
@@ -1698,7 +1698,7 @@
 <XPD:OBJ name="NameCompartment" type="UMLNameCompartmentView" guid="XYPkCLF3PUGRoBbb6ykykQAA">
 <XPD:OBJ name="NameLabel" type="LabelView" guid="pzJR88Spr0i5Ba9t86yy8gAA">
 <XPD:ATTR name="Width" type="integer">50</XPD:ATTR>
-<XPD:ATTR name="Text" type="string">readed</XPD:ATTR>
+<XPD:ATTR name="Text" type="string">read</XPD:ATTR>
 </XPD:OBJ>
 <XPD:OBJ name="StereotypeLabel" type="LabelView" guid="d6TCxjAhbUOPOxstOVgDTwAA">
 <XPD:ATTR name="Visible" type="boolean">False</XPD:ATTR>

@@ -125,7 +125,7 @@ delete_message(#dialogue{messages = MessageIDS}= D,
               #user{nick = Nick})->
   F=
     fun()->
-      MessageIDS_F =lists:filter(fun(ID)-> ID =/= MID end, MessageIDS),
+      MessageIDS_F=lists:filter(fun(ID)-> ID =/= MID end, MessageIDS),
       dialogue_repo:update(D#dialogue{messages = MessageIDS_F}),
       message_repo:delete(M)
     end,

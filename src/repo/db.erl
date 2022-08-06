@@ -10,7 +10,7 @@
 -author("aleksandr_work").
 
 %% API
--export([start_db/0]).
+-export([start_db/0, get_session/0]).
 
 %%вызывается функция create_tables
 %%таким образом будет единая точка поднятия базы, которая либо создаст пустую,
@@ -19,3 +19,4 @@ start_db()->
   ok.
 
 %%get_session()->
+%%  eredis:start_link().

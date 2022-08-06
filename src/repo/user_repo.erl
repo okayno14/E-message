@@ -12,14 +12,7 @@
 %% API
 -export([create_table/0,write/1,read/1,read/2,update/1,delete/1]).
 
-create_table()->
-  mnesia:create_table(user,
-    [
-      {record_name, user},
-      {type, set},
-      {attributes, record_info(fields,user)},
-      {disc_copies, [node()]}
-    ]).
+create_table()-> ok.
 
 write(User)->
   case read(User#user.nick) of

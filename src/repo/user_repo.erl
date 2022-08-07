@@ -19,7 +19,7 @@ write(User)->
     []->
       mnesia:write(User),
       User;
-    _Obj->transaction:abort_transaction(already_exists)
+    _Obj-> transaction:abort_transaction(already_exists)
   end.
 
 read(Nick)->

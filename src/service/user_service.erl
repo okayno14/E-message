@@ -25,7 +25,7 @@ get_user(Nick,Pass)->
     fun()->
       user_repo:read(Nick,Pass)
     end,
-  T=transaction:begin_transaction(F),
+  T= transaction:begin_transaction(F),
   service:extract_single_value(T).
 
 

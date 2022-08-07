@@ -72,7 +72,7 @@ quit_dialogue(#dialogue{users = Nick_List}=D,#user{nick = Nick}=U)->
           Arr = lists:filter(fun(Elem)-> Elem =/= Nick end, Nick_List),
           D1=D#dialogue{users = Arr},
           Fun=fun()-> dialogue_repo:update(D1) end,
-          T1=transaction:begin_transaction(Fun),
+          T1= transaction:begin_transaction(Fun),
           io:format("TRACE dialogue_service:quit_dialogue/2 Update transaction:~p~n",[T1]),
           T1
       end;
@@ -117,7 +117,7 @@ change_text(M,Text)->
     message_repo:update(M_Persited),
     [M_Persited]
   end,
-  T=transaction:begin_transaction(Fun),
+  T= transaction:begin_transaction(Fun),
   service:extract_single_value(T).
 
 delete_message(#dialogue{messages = MessageIDS}= D,

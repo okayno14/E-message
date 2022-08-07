@@ -20,7 +20,9 @@
 %%     дескриптор соединения, ключи поиска
 -export([write/2,
         read/2,
-        read/3]).
+        read/3,
+        update/2,
+        delete/2]).
 
 write(Con,#user{nick = Nick}=User)->
   case read(Con,Nick) of
@@ -45,3 +47,10 @@ read(Con,Nick,Pass)->
       [];
     [] -> []
   end.
+
+update(Con,#user{nick = Nick}=User)->
+  eredis:q(Con,["HSET", "User", Nick, ?record_to_json(user,User)]),
+  User.
+
+delete(Con,#user{nick = Nick})->
+  eredis:q(Con,["HDEL","User", Nick]).

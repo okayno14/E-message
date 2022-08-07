@@ -36,7 +36,15 @@ read(Con, DID) when is_integer(DID)->
       Dialogue#dialogue{users = Users, messages=Messages}
   end.
 
-%%read_by_user
+%%read_by_user(Con,#user{nick = Nick})->
+%%  {ok,Sets} = eredis:q(Con,["KEYS",name_gen:gen_dialogue_user_search_pattern()]),
+%%  Fun = fun(Set_Nicks, Res)->
+%%      {ok,IsContain} = eredis:q(Con,["SISMEMBER", Set_Nicks, Nick]),
+%%      case binary_to_integer(IsContain) of
+%%        0->Res;
+%%        1->[]
+%%      end
+%%        end.
 
 
 %%zrange dialogue:<DID>:message 0 -1

@@ -13,7 +13,11 @@
 %% API
 -export([]).
 
-%%write(Con,Dialogue)->
-%%  DID = eredis:q(Con,["INCR", "SeqDial"]),
-%%  Commited = Dialogue#dialogue{id=DID},
-%%  eredis:q(Con,["HSET","Dialogue",])
+write(Con,Dialogue)->
+  DID = eredis:q(Con,["INCR", "SeqDial"]),
+  Commited = Dialogue#dialogue{id=DID},
+  W = eredis:q(Con,["HSET",atom_to_list(dialogue),DID,?record_to_json(dialogue,Commited)]),
+  case W of
+    {error,_R}->{error,_R};
+    {ok,_}->Commited
+  end.

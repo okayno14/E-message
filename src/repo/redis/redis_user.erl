@@ -19,7 +19,8 @@
 %%     дескриптор соединения, сущность
 %%     дескриптор соединения, ключи поиска
 -export([write/2,
-        read/2]).
+        read/2,
+        read/3]).
 
 write(Con,#user{nick = Nick}=User)->
   case read(Con,Nick) of
@@ -34,4 +35,13 @@ read(Con,Nick)->
     {ok, undefined}-> [];
     {ok, JSON}->
       [?json_to_record(user,JSON)]
+  end.
+
+read(Con,Nick,Pass)->
+  case read(Con,Nick) of
+    [User|_] when User#user.pass =:= Pass->
+      [User];
+    [User|_] when User#user.pass =/= Pass->
+      [];
+    [] -> []
   end.

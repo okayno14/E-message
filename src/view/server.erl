@@ -156,7 +156,7 @@ get_dialogues_handler(ArgsJSON,Socket)->
       Res=dialogue_controller:get_dialogues(_U),
       handle_request_result(
         Res,
-        fun(Y)->parse:encodeRecordArray(Y,fun(X)->?record_to_json(dialogue,X) end) end,
+        fun(Y)-> name_gen:encodeRecordArray(Y,fun(X)->?record_to_json(dialogue,X) end) end,
         Socket);
     false->
       handle_error(not_authorised,Socket)
@@ -235,7 +235,7 @@ get_messages_handler(ArgsJSON, Socket)->
           Res = dialogue_controller:get_messages(D),
           handle_request_result(
             Res,
-            fun(Y)->parse:encodeRecordArray(Y,fun(X)->?record_to_json(message,X) end) end,
+            fun(Y)-> name_gen:encodeRecordArray(Y,fun(X)->?record_to_json(message,X) end) end,
             Socket)
       end;
     false->ok

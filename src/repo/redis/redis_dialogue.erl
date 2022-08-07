@@ -31,7 +31,7 @@ read(Con, DID) when is_integer(DID)->
     undefined->[];
     JSON ->
       Dialogue = ?json_to_record(dialogue,JSON),
-      {ok,List} = eredis:q(Con,["SMEMBERS", gen_dialogue_users_name(Dialogue)]),
+      {ok,List} = eredis:q(Con,["SMEMBERS", name_gen:gen_dialogue_user_name(Dialogue)]),
       Dialogue#dialogue{users = List}
   end.
 
@@ -48,12 +48,9 @@ write_users(Con,#dialogue{}=Dialogue, Nicks)->
   eredis:q(Con,["MULTI"]),
   lists:map(
   fun(Nick)->
-    eredis:q(Con,["SADD", gen_dialogue_users_name(Dialogue), Nick])
+    eredis:q(Con,["SADD", name_gen:gen_dialogue_user_name(Dialogue), Nick])
   end,
   Nicks),
   {ok,_} = eredis:q(Con,["EXEC"]).
 
 
-gen_dialogue_users_name(#dialogue{id = DID})->
-  _B=[":"|atom_to_list(user)],
-  [atom_to_list(dialogue)|[":"|[DID |_B]]].

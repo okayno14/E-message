@@ -27,14 +27,14 @@ create_dialogue(D)->
     fun()->
       dialogue_repo:write(D)
     end,
-  transaction:begin_transaction(F).
+  redis_transaction:begin_transaction(F).
 
 get_dialogue(ID)->
   Fun =
     fun()->
       dialogue_repo:read(ID)
     end,
-  Transaction = transaction:begin_transaction(Fun),
+  Transaction = redis_transaction:begin_transaction(Fun),
   io:format("TRACE dialogue_service:get_dialogue/1 Transaction:~p~n",[Transaction]),
   service:extract_single_value(Transaction).
 
@@ -43,21 +43,21 @@ get_dialogues(U)->
     fun()->
       dialogue_repo:read_by_User(U)
     end,
-  service:extract_values(transaction:begin_transaction(F)).
+  service:extract_values(redis_transaction:begin_transaction(F)).
 
 get_message(MID)->
   F=
   fun()->
     message_repo:read(MID)
   end,
-  service:extract_single_value(transaction:begin_transaction(F)).
+  service:extract_single_value(redis_transaction:begin_transaction(F)).
 
 get_messages(D)->
   F=
   fun()->
     dialogue_repo:fetch_messages(D)
   end,
-  service:extract_values(transaction:begin_transaction(F)).
+  service:extract_values(redis_transaction:begin_transaction(F)).
 
 quit_dialogue(#dialogue{users = Nick_List}=D,#user{nick = Nick}=U)->
   case dialogue:containsUser(D,U) of
@@ -72,7 +72,7 @@ quit_dialogue(#dialogue{users = Nick_List}=D,#user{nick = Nick}=U)->
           Arr = lists:filter(fun(Elem)-> Elem =/= Nick end, Nick_List),
           D1=D#dialogue{users = Arr},
           Fun=fun()-> dialogue_repo:update(D1) end,
-          T1= transaction:begin_transaction(Fun),
+          T1= redis_transaction:begin_transaction(Fun),
           io:format("TRACE dialogue_service:quit_dialogue/2 Update transaction:~p~n",[T1]),
           T1
       end;
@@ -93,7 +93,7 @@ add_message(D,M)->
       message_repo:update(message:send(M_Persisted)),
       message_repo:read(M_Persisted#message.id)
     end,
-  T = transaction:begin_transaction(Fun),
+  T = redis_transaction:begin_transaction(Fun),
   service:extract_single_value(T).
 
 read_message(M)->
@@ -101,13 +101,13 @@ read_message(M)->
   fun()->
     case message:read(M) of
       {error,_R}->
-        transaction:abort_transaction(_R);
+        redis_transaction:abort_transaction(_R);
       M_Persisted->
         message_repo:update(M_Persisted),
         [M_Persisted]
     end
   end,
-  T = transaction:begin_transaction(Fun),
+  T = redis_transaction:begin_transaction(Fun),
   service:extract_single_value(T).
 
 change_text(M,Text)->
@@ -117,7 +117,7 @@ change_text(M,Text)->
     message_repo:update(M_Persited),
     [M_Persited]
   end,
-  T= transaction:begin_transaction(Fun),
+  T= redis_transaction:begin_transaction(Fun),
   service:extract_single_value(T).
 
 delete_message(#dialogue{messages = MessageIDS}= D,
@@ -129,7 +129,7 @@ delete_message(#dialogue{messages = MessageIDS}= D,
       dialogue_repo:update(D#dialogue{messages = MessageIDS_F}),
       message_repo:delete(M)
     end,
-  transaction:begin_transaction(F);
+  redis_transaction:begin_transaction(F);
 
 delete_message(_D,
               #message{from = _Nick1},
@@ -140,4 +140,4 @@ delete_dialogue(D)->
   F=fun()->
       dialogue_repo:delete(D)
     end,
-  transaction:begin_transaction(F).
+  redis_transaction:begin_transaction(F).

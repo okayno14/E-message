@@ -18,14 +18,14 @@ create_user(User)->
     fun()->
       user_repo:write(User)
     end,
-  transaction:begin_transaction(F).
+  redis_transaction:begin_transaction(F).
 
 get_user(Nick,Pass)->
   F=
     fun()->
       user_repo:read(Nick,Pass)
     end,
-  T= transaction:begin_transaction(F),
+  T= redis_transaction:begin_transaction(F),
   service:extract_single_value(T).
 
 

@@ -31,9 +31,17 @@ read(Con, DID) when is_integer(DID)->
     undefined->[];
     JSON ->
       Dialogue = ?json_to_record(dialogue,JSON),
-      {ok,List} = eredis:q(Con,["SMEMBERS", name_gen:gen_dialogue_user_name(Dialogue)]),
-      Dialogue#dialogue{users = List}
+      {ok,Users} = eredis:q(Con,["SMEMBERS", name_gen:gen_dialogue_user_name(Dialogue)]),
+      {ok,Messages} = eredis:q(Con,["ZRANGE",name_gen:gen_dialogue_message_name(Dialogue),0,-1]),
+      Dialogue#dialogue{users = Users, messages=Messages}
   end.
+
+%%read_by_user
+
+
+%%zrange dialogue:<DID>:message 0 -1
+%%fetch_messages
+
 
 %%переписать сообщения
 %%переписать пользователей

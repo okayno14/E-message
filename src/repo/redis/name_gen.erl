@@ -10,11 +10,18 @@
 -include("entity.hrl").
 
 %% API
--export([gen_dialogue_user_name/1]).
+-export([gen_dialogue_user_name/1,
+        gen_dialogue_message_name/1]).
 
-gen_dialogue_user_name(#dialogue{id = DID}) when is_binary(DID)->
+%%dialogue:<DID>:user
+gen_dialogue_user_name(#dialogue{id = DID})->
   _B=[":"|atom_to_list(user)],
   [atom_to_list(dialogue)|[":"|[parseID(DID) |_B]]].
+
+%%dialogue:<DID>:message
+gen_dialogue_message_name(#dialogue{id = DID})->
+  _B=[":"|atom_to_list(message)],
+  [atom_to_list(dialogue)|[":"|[parseID(DID)|_B]]].
 
 parseID(ID) when is_binary(ID)->
   binary_to_list(ID);

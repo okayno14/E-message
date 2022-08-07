@@ -7,7 +7,13 @@
 %%% Created : 07. авг. 2022 10:21
 %%%-------------------------------------------------------------------
 -module(redis_dialogue).
--author("aleksandr_work").
+-include("entity.hrl").
+-include("jsonerl/jsonerl.hrl").
 
 %% API
 -export([]).
+
+%%write(Con,Dialogue)->
+%%  DID = eredis:q(Con,["INCR", "SeqDial"]),
+%%  Commited = Dialogue#dialogue{id=DID},
+%%  eredis:q(Con,["HSET","Dialogue",])

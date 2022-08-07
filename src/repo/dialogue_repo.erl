@@ -23,7 +23,7 @@ create_table()->
     ]).
 
 write(Dialogue)->
-  ID = seq:get_counter(seq),
+  ID = seq:get_counter(dialogue),
   Commited = Dialogue#dialogue{id=ID},
   mnesia:write(Commited),
   [Obj|_]=mnesia:read(dialogue,ID),

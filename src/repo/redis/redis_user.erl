@@ -27,13 +27,13 @@
 write(Con,#user{nick = Nick}=User)->
   case read(Con,Nick) of
     [] ->
-      eredis:q(Con,["HSET", "User", Nick, ?record_to_json(user,User)]),
+      eredis:q(Con,["HSET", atom_to_list(user), Nick, ?record_to_json(user,User)]),
       User;
     _Obj -> {error, already_exists}
   end.
 
 read(Con,Nick)->
-  case eredis:q(Con,["HGET","User",Nick]) of
+  case eredis:q(Con,["HGET",atom_to_list(user),Nick]) of
     {ok, undefined}-> [];
     {ok, JSON}->
       [?json_to_record(user,JSON)]
@@ -49,8 +49,8 @@ read(Con,Nick,Pass)->
   end.
 
 update(Con,#user{nick = Nick}=User)->
-  eredis:q(Con,["HSET", "User", Nick, ?record_to_json(user,User)]),
+  eredis:q(Con,["HSET", atom_to_list(user), Nick, ?record_to_json(user,User)]),
   User.
 
 delete(Con,#user{nick = Nick})->
-  eredis:q(Con,["HDEL","User", Nick]).
+  eredis:q(Con,["HDEL",atom_to_list(user), Nick]).

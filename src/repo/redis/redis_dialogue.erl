@@ -23,14 +23,16 @@ write(Con,#dialogue{users = Nicks} = Dialogue)->
   write_users(Con, Commited, Nicks),
   Dialogue#dialogue{id = binary_to_integer(DID)}.
 
-%%прочитать пользователей
+%%прочитать пользователей ok
 %%прочитать сообщения
-read(Con, DID)->
+read(Con, DID) when is_integer(DID)->
   {ok, T} = eredis:q(Con,["HGET",atom_to_list(dialogue),DID]),
   case T of
     undefined->[];
-    _ ->
-      [?json_to_record(dialogue,T)]
+    JSON ->
+      Dialogue = ?json_to_record(dialogue,JSON),
+      {ok,List} = eredis:q(Con,["SMEMBERS", gen_dialogue_users_name(Dialogue)]),
+      Dialogue#dialogue{users = List}
   end.
 
 %%переписать сообщения
@@ -42,14 +44,16 @@ read(Con, DID)->
 
 
 %%DID - бинарная строка, в которой записан численный ID
-write_users(Con,#dialogue{id=DID}, Nicks)->
+write_users(Con,#dialogue{}=Dialogue, Nicks)->
   eredis:q(Con,["MULTI"]),
-  _B=[":"|atom_to_list(user)],
-  Str=[atom_to_list(dialogue)|[":"|[DID |_B]]],
-  io:format("~p~n",[Str]),
   lists:map(
   fun(Nick)->
-    eredis:q(Con,["SADD", Str, Nick])
+    eredis:q(Con,["SADD", gen_dialogue_users_name(Dialogue), Nick])
   end,
   Nicks),
   {ok,_} = eredis:q(Con,["EXEC"]).
+
+
+gen_dialogue_users_name(#dialogue{id = DID})->
+  _B=[":"|atom_to_list(user)],
+  [atom_to_list(dialogue)|[":"|[DID |_B]]].

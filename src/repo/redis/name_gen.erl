@@ -13,7 +13,7 @@
 -export([gen_dialogue_user_name/1,
         gen_dialogue_message_name/1,
         gen_dialogue_user_search_pattern/0,
-        parse_DID_from_dialogue_user_search_pattern/1]).
+        parse_DID_from_dialogue_message/1]).
 
 %%dialogue:<DID>:user
 gen_dialogue_user_name(#dialogue{id = DID})->
@@ -27,28 +27,28 @@ gen_dialogue_message_name(#dialogue{id = DID})->
 
 %%dialogue:*:user
 gen_dialogue_user_search_pattern()->
-  [atom_to_list(dialogue)|[":"|atom_to_list(user)]].
+  [atom_to_list(dialogue)|[":*:"|atom_to_list(user)]].
 
-parse_DID_from_dialogue_user_search_pattern(Query)->
-  parse_DID_from_dialogue_user_search_pattern(Query,1).
+parse_DID_from_dialogue_message(Query)->
+  parse_DID_from_dialogue_message(Query,1).
 
-parse_DID_from_dialogue_user_search_pattern(Query, _State=1)->
+parse_DID_from_dialogue_message(Query, _State=1)->
   case string:split(Query,atom_to_list(dialogue)) of
     [Query|_]->{error,not_found};
-    [_|Rest]->parse_DID_from_dialogue_user_search_pattern(Rest,2)
+    [_|Rest]-> parse_DID_from_dialogue_message(Rest,2)
   end;
-parse_DID_from_dialogue_user_search_pattern(Query,_State=2)->
+parse_DID_from_dialogue_message(Query,_State=2)->
   case string:split(Query,":") of
     Query->{error,not_found};
-    [_|Rest]->parse_DID_from_dialogue_user_search_pattern(Rest,3)
+    [_|Rest]-> parse_DID_from_dialogue_message(Rest,3)
   end;
-parse_DID_from_dialogue_user_search_pattern(Query,_State=3)->
+parse_DID_from_dialogue_message(Query,_State=3)->
   case string:split(Query,":") of
     Query->{error,not_found};
     [Res|_]->
       case string:to_integer(Res) of
         {error,_}->{error,not_found};
-        {Num,_}->Num
+        {Num,_}->{ok,Num}
       end
   end.
 

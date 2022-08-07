@@ -12,7 +12,8 @@
 
 %% API
 -export([write/2,
-        read/2]).
+        read/2,
+        read_by_user/2]).
 
 %%записать пользователей
 write(Con,#dialogue{users = Nicks} = Dialogue)->
@@ -33,18 +34,31 @@ read(Con, DID) when is_integer(DID)->
       Dialogue = ?json_to_record(dialogue,JSON),
       {ok,Users} = eredis:q(Con,["SMEMBERS", name_gen:gen_dialogue_user_name(Dialogue)]),
       {ok,Messages} = eredis:q(Con,["ZRANGE",name_gen:gen_dialogue_message_name(Dialogue),0,-1]),
-      Dialogue#dialogue{users = Users, messages=Messages}
+      [Dialogue#dialogue{users = Users, messages=Messages}]
   end.
 
-%%read_by_user(Con,#user{nick = Nick})->
-%%  {ok,Sets} = eredis:q(Con,["KEYS",name_gen:gen_dialogue_user_search_pattern()]),
-%%  Fun = fun(Set_Nicks, Res)->
-%%      {ok,IsContain} = eredis:q(Con,["SISMEMBER", Set_Nicks, Nick]),
-%%      case binary_to_integer(IsContain) of
-%%        0->Res;
-%%        1->[]
-%%      end
-%%        end.
+read_by_user(Con,#user{nick = Nick})->
+  %%получаем список множеств участников диалогов
+  {ok,Sets} = eredis:q(Con,["KEYS",name_gen:gen_dialogue_user_search_pattern()]),
+  io:format("TRACE redis_dialogue:read_by_user/2 Sets=~p~n",[Sets]),
+  %%определяем функцию заполнения результата текущей функции
+  Fun =
+    fun(Set_Nicks, Res)->
+      {ok,IsContain} = eredis:q(Con,["SISMEMBER", Set_Nicks, Nick]),
+      case binary_to_integer(IsContain) of
+        0->
+          Res;
+        1->
+          %%Если попали сюда, значит, в текущем множестве участников есть искомый пользователь
+          %%Извлекаем из имени множества идентификатор диалога
+          {ok,DID} = name_gen:parse_DID_from_dialogue_message(Set_Nicks),
+          %%Запрашиваем диалог по идентификатору
+          [Dialogue|_]=read(Con,DID),
+          %%Добавляем диалог в результирующий список
+          [Dialogue|Res]
+      end
+    end,
+  lists:foldl(Fun,[],Sets).
 
 
 %%zrange dialogue:<DID>:message 0 -1

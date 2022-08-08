@@ -292,6 +292,7 @@ delete_message_handler(ArgsJSON,Socket, Con)->
       User = #user{nick = Nick,pass = Pass},
       M=dialogue_controller:get_message(MID, Con),
       D=dialogue_controller:get_dialogue(DID, Con),
+      io:format("TRACE server:delete_message_handler/3 D: ~p~n",[D]),
       if
         is_record(M,message) and is_record(D,dialogue)->
           Res = dialogue_controller:delete_message(D,M,User, Con),

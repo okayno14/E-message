@@ -115,6 +115,7 @@ delete_message(#dialogue{messages = MessageIDS}=D,
   F=
     fun()->
       MessageIDS_F=lists:filter(fun(ID)-> ID =/= MID end, MessageIDS),
+      io:format("TRACE dialogue_service:delete_message/2 MessageIDS_F: ~p~n",[MessageIDS_F]),
       dialogue_repo:update(D#dialogue{messages = MessageIDS_F}, Con),
       message_repo:delete(M, Con)
     end,

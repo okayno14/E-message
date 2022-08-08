@@ -43,7 +43,9 @@ read(Con, DID) when is_integer(DID)->
       Dialogue = ?json_to_record(dialogue,JSON),
       {ok,Users} = eredis:q(Con,["SMEMBERS", name_gen:gen_dialogue_user_name(Dialogue)]),
       {ok,Messages} = eredis:q(Con,["ZREVRANGE",name_gen:gen_dialogue_message_name(Dialogue),0,-1]),
-      [Dialogue#dialogue{users = Users, messages=Messages}]
+      [Dialogue#dialogue{users = Users,
+                        messages=lists:map(fun(MID_JSON)->binary_to_integer(MID_JSON) end,
+                                          Messages)}]
   end.
 
 read_by_user(Con,#user{nick = Nick})->
@@ -80,20 +82,22 @@ fetch_messages(Con,#dialogue{messages = Messages})->
 
 %%переписать сообщения ok
 %%переписать пользователей ok
-update(Con,#dialogue{users = Nicks, id=DID}=Dialogue)->
+update(Con,#dialogue{users = Nicks, messages = MID_LIST, id=DID}=Dialogue)->
   %%Получить сообщения
-  M_List = fetch_messages(Con,Dialogue),
-  io:format("TRACE redis:dialogue/2 M_List: ~p~n",[M_List]),
+  %%M_List = fetch_messages(Con,Dialogue),
+  {ok,M_ListJSON} = eredis:q(Con,["HMGET",atom_to_list(message)|MID_LIST]),
+  io:format("TRACE redis:dialogue/2 M_ListJSON: ~p~n",[M_ListJSON]),
   eredis:q(Con,["MULTI"]),
     %%пересоздать дерево сообщений
-    rewrite_messages(Con,Dialogue,M_List),
+    rewrite_messages(Con,Dialogue,M_ListJSON),
     %%Переписать множество пользователей
     eredis:q(Con,["DEL",name_gen:gen_dialogue_user_name(Dialogue)]),
     write_users(Con,Dialogue,Nicks),
     %%Переписать метаданные диалога
     Commited = Dialogue#dialogue{id=DID, users = [],messages = []},
     {ok,_} = eredis:q(Con,["HSET",atom_to_list(dialogue),DID,?record_to_json(dialogue,Commited)]),
-  {ok,_}=eredis:q(Con,["EXEC"]),
+  {ok,T}=eredis:q(Con,["EXEC"]),
+  io:format("TRACE redis:update/2 Transaction res: ~p~n",[T]),
   Dialogue.
 
 delete(Con,#dialogue{messages = Messages, id = DID}=Dialogue)->
@@ -121,17 +125,25 @@ write_users(Con,#dialogue{}=Dialogue, Nicks)->
   end,
   Nicks).
 
-rewrite_messages(Con, #dialogue{}=Dialogue, M_List)->
+rewrite_messages(Con, #dialogue{}=Dialogue, M_ListJSON)->
+  io:format("TRACE redis:rewrite_messages/3 M_ListJSON: ~p~n",[M_ListJSON]),
   DM_Tree = name_gen:gen_dialogue_message_name(Dialogue),
   io:format("TRACE redis:rewrite_messages/3 DM_Tree: ~p~n",[DM_Tree]),
   %%Удалить дерево сообщений
   DEL_TREE_RES=eredis:q(Con,["DEL",DM_Tree]),
   io:format("TRACE redis:rewrite_messages/3 DEL_TREE_RES: ~p~n",[DEL_TREE_RES]),
   {ok,_}=DEL_TREE_RES,
+%%  Fun =
+%%    fun(M)->
+%%      #message{timeSending = TIME,id = MID}=M,
+%%      eredis:q(Con,["ZADD",DM_Tree,TIME,MID])
+%%    end,
   Fun =
-    fun(M)->
+    fun(MJSON)->
+      M=?json_to_record(message,MJSON),
       #message{timeSending = TIME,id = MID}=M,
+      io:format("TRACE redis:rewrite_messages/3 M: ~p~n",[M]),
       eredis:q(Con,["ZADD",DM_Tree,TIME,MID])
     end,
   %%Создать новое дерево сообщений
-  lists:map(Fun,M_List).
+  lists:map(Fun,M_ListJSON).

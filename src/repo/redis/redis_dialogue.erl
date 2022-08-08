@@ -91,7 +91,7 @@ update(Con,#dialogue{users = Nicks, id=DID}=Dialogue)->
     eredis:q(Con,["DEL",name_gen:gen_dialogue_user_name(Dialogue)]),
     write_users(Con,Dialogue,Nicks),
     %%Переписать метаданные диалога
-    Commited = Dialogue#dialogue{id=DID, users = undefined},
+    Commited = Dialogue#dialogue{id=DID, users = [],messages = []},
     {ok,_} = eredis:q(Con,["HSET",atom_to_list(dialogue),DID,?record_to_json(dialogue,Commited)]),
   {ok,_}=eredis:q(Con,["EXEC"]),
   Dialogue.
@@ -126,11 +126,10 @@ rewrite_messages(Con, #dialogue{}=Dialogue, M_List)->
   io:format("TRACE redis:rewrite_messages/3 DM_Tree: ~p~n",[DM_Tree]),
   %%Удалить дерево сообщений
   DEL_TREE_RES=eredis:q(Con,["DEL",DM_Tree]),
-  io:format("TRACE redis:dialogue/2 DEL_TREE_RES: ~p~n",[DEL_TREE_RES]),
+  io:format("TRACE redis:rewrite_messages/3 DEL_TREE_RES: ~p~n",[DEL_TREE_RES]),
   {ok,_}=DEL_TREE_RES,
   Fun =
-    fun(M_JSON)->
-      M=?json_to_record(message,M_JSON),
+    fun(M)->
       #message{timeSending = TIME,id = MID}=M,
       eredis:q(Con,["ZADD",DM_Tree,TIME,MID])
     end,

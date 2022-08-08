@@ -14,7 +14,8 @@
 %% API
 -export([start/0,
         start_acceptor/2,
-        time_millis/0]).
+        time_millis/0,
+        parseRequest/1]).
 
 start() ->
   {ok,Con}=eredis:start_link(),

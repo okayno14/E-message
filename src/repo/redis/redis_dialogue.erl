@@ -15,7 +15,8 @@
         read/2,
         read_by_user/2,
         fetch_messages/2,
-        update/2]).
+        update/2,
+        delete/2]).
 
 %%записать пользователей
 %%записать метаданные диалога
@@ -84,8 +85,9 @@ update(Con,#dialogue{users = Nicks, id=DID}=Dialogue)->
   M_List = fetch_messages(Con,Dialogue),
   eredis:q(Con,["MULTI"]),
     %%пересоздать дерево сообщений
-    write_messages(Con,Dialogue,M_List),
-    %%Записать множество пользователей
+    rewrite_messages(Con,Dialogue,M_List),
+    %%Переписать множество пользователей
+    eredis:q(Con,["DEL",name_gen:gen_dialogue_user_name(Dialogue)]),
     write_users(Con,Dialogue,Nicks),
     %%Переписать метаданные диалога
     Commited = Dialogue#dialogue{id=DID, users = undefined},
@@ -93,6 +95,21 @@ update(Con,#dialogue{users = Nicks, id=DID}=Dialogue)->
   {ok,_}=eredis:q(Con,["EXEC"]),
   Dialogue.
 
+delete(Con,#dialogue{messages = Messages, id = DID}=Dialogue)->
+  eredis:q(Con,["MULTI"]),
+    %%удаление множества участников диалога
+    eredis:q(Con,["DEL",name_gen:gen_dialogue_user_name(Dialogue)]),
+    %%удаление дерева сообщений диалога
+    eredis:q(Con,["DEL",name_gen:gen_dialogue_message_name(Dialogue)]),
+    %%каскадное удаление связанных сообщений
+    Fun =
+      fun(MID)->
+        eredis:q(Con, ["HDEL",atom_to_list(message),MID])
+      end,
+    lists:map(Fun,Messages),
+    eredis:q(Con,["HDEL",atom_to_list(dialogue),DID]),
+  {ok,_}=eredis:q(Con,["EXEC"]),
+  ok.
 
 %%DID - бинарная строка, в которой записан численный ID
 write_users(Con,#dialogue{}=Dialogue, Nicks)->
@@ -103,7 +120,7 @@ write_users(Con,#dialogue{}=Dialogue, Nicks)->
   end,
   Nicks).
 
-write_messages(Con, #dialogue{}=Dialogue, M_List)->
+rewrite_messages(Con, #dialogue{}=Dialogue, M_List)->
   DM_Tree = name_gen:gen_dialogue_message_name(Dialogue),
   %%Удалить дерево сообщений
   {ok,_}=eredis:q(Con,["DEL",DM_Tree]),
@@ -113,5 +130,3 @@ write_messages(Con, #dialogue{}=Dialogue, M_List)->
     end,
   %%Создать новое дерево сообщений
   lists:map(Fun,M_List).
-
-

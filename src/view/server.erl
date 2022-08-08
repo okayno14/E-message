@@ -232,11 +232,13 @@ get_messages_handler(ArgsJSON, Socket, Con)->
   case is_authorised(Nick,Pass,Socket, Con) of
     true->
       D=dialogue_controller:get_dialogue(DID, Con),
+      io:format("TRACE server:get_messages_handler/3 D:~p~n",[D]),
       case D of
         {error,_R}->
           handle_error(_R,Socket);
         D->
           Res = dialogue_controller:get_messages(D, Con),
+          io:format("TRACE server:get_messages_handler/3 Messages:~p~n",[Res]),
           handle_request_result(
             Res,
             fun(Y)-> parse:encodeRecordArray(Y,fun(X)->?record_to_json(message,X) end) end,

@@ -74,7 +74,7 @@ fetch_messages(Con,#dialogue{messages = Messages})->
   Fun=
     fun(MID,Res)->
       {ok, M}=eredis:q(Con,["HGET", atom_to_list(message),MID]),
-      [M|Res]
+      [?json_to_record(message,M)|Res]
     end,
   lists:foldl(Fun,[],Messages).
 

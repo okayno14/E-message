@@ -111,8 +111,8 @@ handle_request_result(Res,HappyParse,Socket)->
 %%Ищет пользователя в базе для проведения авторизации.
 %%В случае успеха возвращает true,
 %%иначе - посылает клиенту ответ и возвращает false
-is_authorised(Nick,Pass,Socket)->
-  case user_controller:get_user(Nick,Pass) of
+is_authorised(Nick,Pass,Socket,Con)->
+  case user_controller:get_user(Nick,Pass,Con) of
     {error,_Reason}->
       handle_error(_Reason,Socket),
       false;
@@ -136,7 +136,7 @@ create_user_handler(ArgsJSON, Socket, Con)->
 create_dialogue_handler(ArgsJSON,Socket, Con)->
   Args = ?json_to_record(create_dialogue,ArgsJSON),
   #create_dialogue{nick = Nick, pass=Pass, name = Name, userNicks = UserNicks}=Args,
-  case is_authorised(Nick,Pass,Socket) of
+  case is_authorised(Nick,Pass,Socket, Con) of
     true->
       _D=#dialogue{name=Name,users = UserNicks},
       Res=dialogue_controller:create_dialogue(_D, Con),
@@ -150,13 +150,14 @@ create_dialogue_handler(ArgsJSON,Socket, Con)->
 get_dialogues_handler(ArgsJSON,Socket, Con)->
   Args= ?json_to_record(get_dialogues,ArgsJSON),
   #get_dialogues{nick = Nick,pass = Pass}=Args,
-  case is_authorised(Nick,Pass,Socket) of
+  case is_authorised(Nick,Pass,Socket, Con) of
     true->
       _U=#user{nick = Nick,pass = Pass},
       Res=dialogue_controller:get_dialogues(_U, Con),
+      io:format("TRACE server:get_dialogues_handler/3 D_LIST:~p~n",[Res]),
       handle_request_result(
         Res,
-        fun(Y)-> name_gen:encodeRecordArray(Y,fun(X)->?record_to_json(dialogue,X) end) end,
+        fun(Y)-> parse:encodeRecordArray(Y,fun(X)->?record_to_json(dialogue,X) end) end,
         Socket);
     false->
       handle_error(not_authorised,Socket)
@@ -167,7 +168,7 @@ quit_dialogue_handler(ArgsJSON,Socket, Con)->
   #quit_dialogue{nick = Nick, pass = Pass, id=DID}=Args,
   io:format("TRACE server:quit_dialogue_handler/2 parsed User:~p ~p~n",[Nick,Pass]),
   io:format("TRACE server:quit_dialogue_handler/2 parsed dialID: ~p~n",[DID]),
-  case is_authorised(Nick,Pass,Socket) of
+  case is_authorised(Nick,Pass,Socket, Con) of
     true->
       io:format("TRACE server:quit_dialogue_handler/2 User authorised~n"),
       _U=#user{nick = Nick,pass = Pass},
@@ -192,7 +193,7 @@ send_message_handler(ArgsJSON, Socket, Con)->
   Args = ?json_to_record(send_message,ArgsJSON),
   #send_message{nick = Nick, pass = Pass, dialogueID = DID, text = Txt}=Args,
   io:format("TRACE server:send_message_handler/2 parsed dialID: ~p~n",[DID]),
-  case is_authorised(Nick,Pass,Socket) of
+  case is_authorised(Nick,Pass,Socket, Con) of
     true->
       io:format("INFO server:send_message_handler/2 User authorised.~n"),
       D=dialogue_controller:get_dialogue(DID, Con),
@@ -212,7 +213,7 @@ send_message_handler(ArgsJSON, Socket, Con)->
 get_message_handler(ArgsJSON, Socket, Con)->
   Args = ?json_to_record(get_message,ArgsJSON),
   #get_message{nick = Nick,pass = Pass, id = MID}=Args,
-  case is_authorised(Nick,Pass,Socket) of
+  case is_authorised(Nick,Pass,Socket, Con) of
     true->
       handle_request_result(
         dialogue_controller:get_message(MID, Con),
@@ -225,7 +226,7 @@ get_message_handler(ArgsJSON, Socket, Con)->
 get_messages_handler(ArgsJSON, Socket, Con)->
   Args = ?json_to_record(get_messages,ArgsJSON),
   #get_messages{nick = Nick, pass=Pass, id = DID}=Args,
-  case is_authorised(Nick,Pass,Socket) of
+  case is_authorised(Nick,Pass,Socket, Con) of
     true->
       D=dialogue_controller:get_dialogue(DID, Con),
       case D of
@@ -235,7 +236,7 @@ get_messages_handler(ArgsJSON, Socket, Con)->
           Res = dialogue_controller:get_messages(D, Con),
           handle_request_result(
             Res,
-            fun(Y)-> name_gen:encodeRecordArray(Y,fun(X)->?record_to_json(message,X) end) end,
+            fun(Y)-> parse:encodeRecordArray(Y,fun(X)->?record_to_json(message,X) end) end,
             Socket)
       end;
     false->ok
@@ -244,7 +245,7 @@ get_messages_handler(ArgsJSON, Socket, Con)->
 read_message_handler(ArgsJSON,Socket, Con)->
   Args = ?json_to_record(read_message,ArgsJSON),
   #read_message{nick = Nick,pass = Pass, id = MID}=Args,
-  case is_authorised(Nick,Pass,Socket) of
+  case is_authorised(Nick,Pass,Socket, Con) of
     true->
       case dialogue_controller:get_message(MID, Con) of
         {error,_R}->
@@ -262,7 +263,7 @@ read_message_handler(ArgsJSON,Socket, Con)->
 change_text_handler(ArgsJSON,Socket, Con)->
   Args = ?json_to_record(change_text,ArgsJSON),
   #change_text{nick = Nick,pass = Pass,id=MID,text = Text}=Args,
-  case is_authorised(Nick,Pass,Socket) of
+  case is_authorised(Nick,Pass,Socket, Con) of
     true->
       case dialogue_controller:get_message(MID, Con) of
         {error,_R}->
@@ -280,7 +281,7 @@ change_text_handler(ArgsJSON,Socket, Con)->
 delete_message_handler(ArgsJSON,Socket, Con)->
   Args = ?json_to_record(delete_message,ArgsJSON),
   #delete_message{nick = Nick,pass = Pass,messageID = MID, dialogueID = DID}=Args,
-  case is_authorised(Nick,Pass,Socket) of
+  case is_authorised(Nick,Pass,Socket, Con) of
     true->
       User = #user{nick = Nick,pass = Pass},
       M=dialogue_controller:get_message(MID, Con),

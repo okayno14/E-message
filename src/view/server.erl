@@ -12,7 +12,9 @@
 -include("entity.hrl").
 -include("config.hrl").
 %% API
--export([start/0, start_acceptor/2]).
+-export([start/0,
+        start_acceptor/2,
+        time_millis/0]).
 
 start() ->
   {ok,Con}=eredis:start_link(),
@@ -59,7 +61,7 @@ loop(Socket,Con)->
   end.
 
 time_millis()->
-  round(erlang:system_time()/1.0e4).
+  round(erlang:system_time()/1.0e7).
 
 %%обработка клиентских запросов
 process_request(Socket, Request,Con)->
@@ -203,7 +205,8 @@ send_message_handler(ArgsJSON, Socket, Con)->
           handle_error(_R,Socket);
         D->
           M=#message{from = Nick, text = Txt, timeSending = time_millis()},
-          Res = dialogue_controller:add_message(D,M, Con),
+          io:format("TRACE server:send_message_handler/2 Written Message:~p~n",[M]),
+          Res = dialogue_controller:add_message(D,M,Con),
           io:format("TRACE server:send_message_handler/2 Controller's res:~p~n",[Res]),
           handle_request_result(Res,fun(X)-> ?record_to_json(message,X) end,Socket)
       end;

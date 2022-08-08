@@ -19,7 +19,7 @@
                 timeSending=0,
                 text="",
                 state=written,
-                artifactID=-1}).
+                artifactID=[]}).
 %%-enum(mime,{audio,image,video,application_zip}).
 -record(artifact,{id=-1,
                   mime="",

@@ -80,18 +80,13 @@ quit_dialogue(#dialogue{users = Nick_List}=D,#user{nick = Nick}=U, Con)->
       {error,user_not_found_in_dialogue}
   end.
 
-%%Сохранить в БД сообщение
-%%Добавить полученный ID в диалог
-%%Сохранить диалог
-%%Вовзращает персистентное сообщение
 add_message(D,M, Con)->
   Fun=
     fun()->
-      M_Persisted = message_repo:write(M, Con),
+      M_Persisted = message_repo:write(message:send(M), Con),
       D_Updated = dialogue:add_message(D,M_Persisted),
       dialogue_repo:update(D_Updated, Con),
-      message_repo:update(message:send(M_Persisted), Con),
-      message_repo:read(M_Persisted#message.id, Con)
+      [M_Persisted]
     end,
   T = redis_transaction:begin_transaction(Fun),
   service:extract_single_value(T).

@@ -83,6 +83,7 @@ fetch_messages(Con,#dialogue{messages = Messages})->
 update(Con,#dialogue{users = Nicks, id=DID}=Dialogue)->
   %%Получить сообщения
   M_List = fetch_messages(Con,Dialogue),
+  io:format("TRACE redis:dialogue/2 M_List: ~p~n",[M_List]),
   eredis:q(Con,["MULTI"]),
     %%пересоздать дерево сообщений
     rewrite_messages(Con,Dialogue,M_List),
@@ -122,10 +123,15 @@ write_users(Con,#dialogue{}=Dialogue, Nicks)->
 
 rewrite_messages(Con, #dialogue{}=Dialogue, M_List)->
   DM_Tree = name_gen:gen_dialogue_message_name(Dialogue),
+  io:format("TRACE redis:rewrite_messages/3 DM_Tree: ~p~n",[DM_Tree]),
   %%Удалить дерево сообщений
-  {ok,_}=eredis:q(Con,["DEL",DM_Tree]),
+  DEL_TREE_RES=eredis:q(Con,["DEL",DM_Tree]),
+  io:format("TRACE redis:dialogue/2 DEL_TREE_RES: ~p~n",[DEL_TREE_RES]),
+  {ok,_}=DEL_TREE_RES,
   Fun =
-    fun(#message{timeSending = TIME,id = MID})->
+    fun(M_JSON)->
+      M=?json_to_record(message,M_JSON),
+      #message{timeSending = TIME,id = MID}=M,
       eredis:q(Con,["ZADD",DM_Tree,TIME,MID])
     end,
   %%Создать новое дерево сообщений

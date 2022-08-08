@@ -10,10 +10,11 @@
 -include("entity.hrl").
 
 %% API
--export([create_user/1,get_user/2]).
+-export([create_user/2,
+          get_user/3]).
 
-create_user(User)->
-  user_service:create_user(User).
+create_user(User, Con)->
+  user_service:create_user(User, Con).
 
-get_user(Nick,Pass)->
-  user_service:get_user(Nick,Pass).
+get_user(Nick,Pass, Con)->
+  user_service:get_user(Nick,Pass, Con).

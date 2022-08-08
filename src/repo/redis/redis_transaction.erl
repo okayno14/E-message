@@ -10,8 +10,12 @@
 -author("aleksandr_work").
 
 %% API
--export([exec_transaction/2]).
+-export([begin_transaction/1]).
 
-%%{ok, Res} || {error, Cause}
-exec_transaction(_DB_SRV,_Fun)->
-  {error, not_supported}.
+%%Для совместимости со старым API
+%%Res || {error, Cause}
+begin_transaction(Fun)->
+  case Fun() of
+    {error,_R}->{error,_R};
+    Res -> Res
+  end.

@@ -12,17 +12,17 @@
 -include("entity.hrl").
 -include("config.hrl").
 %% API
--export([start/0, wait_request/1]).
+-export([start/0, start_acceptor/2]).
 
 start() ->
-  db:start_db(),
+  {ok,Con}=eredis:start_link(),
   {ok,Text_Bin}=file:read_file("priv/etc/config.json"),
   Conf=?json_to_record(config,Text_Bin),
   #config{port = Port,acceptors_quantity = N}=Conf,
   case  gen_tcp:listen(Port,[{active, false}]) of
     {ok, ListenSocket}->
       io:format("INFO server:start/0 Server started. Port=~w~n",[Port]),
-      start_servers(N,ListenSocket),
+      start_servers(N,ListenSocket,Con),
       io:format("INFO server:start/0 Started ~w acceptors~n",[N]),
       %%замораживает listen-процесс
       timer:sleep(infinity);
@@ -30,29 +30,29 @@ start() ->
       io:format("FATAL Can't listen port.~n~p~n",[Reason])
   end.
 
-start_servers(0,_)-> ok;
-start_servers(Num, ListenSocket)->
-  spawn(?MODULE,wait_request,[ListenSocket]),
+start_servers(0,_,_)-> ok;
+start_servers(Num, ListenSocket,Con)->
+  spawn(?MODULE,start_acceptor,[ListenSocket,Con]),
   io:format("INFO server:start_servers/2 Acceptor#~w spawned~n",[Num]),
-  start_servers(Num-1,ListenSocket).
+  start_servers(Num-1,ListenSocket,Con).
 
-wait_request(ListenSocket)->
+start_acceptor(ListenSocket,Con)->
   case gen_tcp:accept(ListenSocket) of
     {ok, Socket} ->
-      loop(Socket),
-      wait_request(ListenSocket);
+      loop(Socket,Con),
+      start_acceptor(ListenSocket,Con);
     {error, Reason}->
       io:format("ERROR server:wait_request Socket ~w [~w] can't accept session. Reason:~p~n",[ListenSocket, self(),Reason])
   end.
 
 %%функция-цикл работы потока-акцептора
-loop(Socket)->
+loop(Socket,Con)->
   inet:setopts(Socket,[{active,once}]),
   receive
     {tcp,Socket,Request}->
       io:format("INFO server:loop/1 Socket ~w [~w] received request ~n", [Socket, self()]),
-      process_request(Socket,Request),
-      loop(Socket);
+      process_request(Socket,Request,Con),
+      loop(Socket,Con);
     {tcp_closed,Socket}->
       io:format("INFO server:loop/1 Socket ~w closed [~w]~n",[Socket,self()]),
       ok
@@ -62,29 +62,29 @@ time_millis()->
   round(erlang:system_time()/1.0e4).
 
 %%обработка клиентских запросов
-process_request(Socket, Request)->
+process_request(Socket, Request,Con)->
   [Fun,ArgsJSON]=parseRequest(Request),
   case Fun of
     create_user->
-      create_user_handler(ArgsJSON,Socket);
+      create_user_handler(ArgsJSON,Socket, Con);
     create_dialogue->
-      create_dialogue_handler(ArgsJSON,Socket);
+      create_dialogue_handler(ArgsJSON,Socket, Con);
     get_dialogues->
-      get_dialogues_handler(ArgsJSON,Socket);
+      get_dialogues_handler(ArgsJSON,Socket, Con);
     quit_dialogue->
-      quit_dialogue_handler(ArgsJSON,Socket);
+      quit_dialogue_handler(ArgsJSON,Socket, Con);
     send_message->
-      send_message_handler(ArgsJSON,Socket);
+      send_message_handler(ArgsJSON,Socket, Con);
     get_message->
-      get_message_handler(ArgsJSON,Socket);
+      get_message_handler(ArgsJSON,Socket, Con);
     get_messages->
-      get_messages_handler(ArgsJSON,Socket);
+      get_messages_handler(ArgsJSON,Socket, Con);
     read_message->
-      read_message_handler(ArgsJSON,Socket);
+      read_message_handler(ArgsJSON,Socket, Con);
     change_text->
-      change_text_handler(ArgsJSON,Socket);
+      change_text_handler(ArgsJSON,Socket, Con);
     delete_message->
-      delete_message_handler(ArgsJSON,Socket)
+      delete_message_handler(ArgsJSON,Socket, Con)
   end.
 
 parseRequest(Request)->
@@ -123,23 +123,23 @@ is_authorised(Nick,Pass,Socket)->
       true
   end.
 
-create_user_handler(ArgsJSON, Socket)->
+create_user_handler(ArgsJSON, Socket, Con)->
   Args = ?json_to_record(create_user,ArgsJSON),
   #create_user{nick = Nick,pass = Pass} = Args,
   User = #user{nick = Nick,pass = Pass},
-  Res=user_controller:create_user(User),
+  Res=user_controller:create_user(User, Con),
   handle_request_result(
     Res,
     fun(X)-> ?record_to_json(user,X) end,
     Socket).
 
-create_dialogue_handler(ArgsJSON,Socket)->
+create_dialogue_handler(ArgsJSON,Socket, Con)->
   Args = ?json_to_record(create_dialogue,ArgsJSON),
   #create_dialogue{nick = Nick, pass=Pass, name = Name, userNicks = UserNicks}=Args,
   case is_authorised(Nick,Pass,Socket) of
     true->
       _D=#dialogue{name=Name,users = UserNicks},
-      Res=dialogue_controller:create_dialogue(_D),
+      Res=dialogue_controller:create_dialogue(_D, Con),
       handle_request_result(Res,
         fun(X)->?record_to_json(dialogue,X) end,
         Socket);
@@ -147,13 +147,13 @@ create_dialogue_handler(ArgsJSON,Socket)->
       handle_error(not_authorised,Socket)
   end.
 
-get_dialogues_handler(ArgsJSON,Socket)->
+get_dialogues_handler(ArgsJSON,Socket, Con)->
   Args= ?json_to_record(get_dialogues,ArgsJSON),
   #get_dialogues{nick = Nick,pass = Pass}=Args,
   case is_authorised(Nick,Pass,Socket) of
     true->
       _U=#user{nick = Nick,pass = Pass},
-      Res=dialogue_controller:get_dialogues(_U),
+      Res=dialogue_controller:get_dialogues(_U, Con),
       handle_request_result(
         Res,
         fun(Y)-> name_gen:encodeRecordArray(Y,fun(X)->?record_to_json(dialogue,X) end) end,
@@ -162,7 +162,7 @@ get_dialogues_handler(ArgsJSON,Socket)->
       handle_error(not_authorised,Socket)
   end.
 
-quit_dialogue_handler(ArgsJSON,Socket)->
+quit_dialogue_handler(ArgsJSON,Socket, Con)->
   Args = ?json_to_record(quit_dialogue,ArgsJSON),
   #quit_dialogue{nick = Nick, pass = Pass, id=DID}=Args,
   io:format("TRACE server:quit_dialogue_handler/2 parsed User:~p ~p~n",[Nick,Pass]),
@@ -171,13 +171,13 @@ quit_dialogue_handler(ArgsJSON,Socket)->
     true->
       io:format("TRACE server:quit_dialogue_handler/2 User authorised~n"),
       _U=#user{nick = Nick,pass = Pass},
-      D=dialogue_controller:get_dialogue(DID),
+      D=dialogue_controller:get_dialogue(DID, Con),
       io:format("TRACE server:quit_dialogue_handler/2 Finded Dialogue:~p~n",[D]),
       case D of
         {error,_R}->
           handle_error(_R,Socket);
         D->
-          Res = dialogue_controller:quit_dialogue(D,_U),
+          Res = dialogue_controller:quit_dialogue(D,_U, Con),
           handle_request_result(
             Res,
             fun(X)->atom_to_list(X) end,
@@ -188,51 +188,51 @@ quit_dialogue_handler(ArgsJSON,Socket)->
       handle_error(not_authorised,Socket)
   end.
 
-send_message_handler(ArgsJSON, Socket)->
+send_message_handler(ArgsJSON, Socket, Con)->
   Args = ?json_to_record(send_message,ArgsJSON),
   #send_message{nick = Nick, pass = Pass, dialogueID = DID, text = Txt}=Args,
   io:format("TRACE server:send_message_handler/2 parsed dialID: ~p~n",[DID]),
   case is_authorised(Nick,Pass,Socket) of
     true->
       io:format("INFO server:send_message_handler/2 User authorised.~n"),
-      D=dialogue_controller:get_dialogue(DID),
+      D=dialogue_controller:get_dialogue(DID, Con),
       io:format("TRACE server:send_message_handler/2 Finded Dialogue:~p~n",[D]),
       case D of
         {error,_R}->
           handle_error(_R,Socket);
         D->
           M=#message{from = Nick, text = Txt, timeSending = time_millis()},
-          Res = dialogue_controller:add_message(D,M),
+          Res = dialogue_controller:add_message(D,M, Con),
           io:format("TRACE server:send_message_handler/2 Controller's res:~p~n",[Res]),
           handle_request_result(Res,fun(X)-> ?record_to_json(message,X) end,Socket)
       end;
     false->ok
   end.
 
-get_message_handler(ArgsJSON, Socket)->
+get_message_handler(ArgsJSON, Socket, Con)->
   Args = ?json_to_record(get_message,ArgsJSON),
   #get_message{nick = Nick,pass = Pass, id = MID}=Args,
   case is_authorised(Nick,Pass,Socket) of
     true->
       handle_request_result(
-        dialogue_controller:get_message(MID),
+        dialogue_controller:get_message(MID, Con),
         fun(X)-> ?record_to_json(message,X) end,
         Socket);
     false->
       ok
   end.
 
-get_messages_handler(ArgsJSON, Socket)->
+get_messages_handler(ArgsJSON, Socket, Con)->
   Args = ?json_to_record(get_messages,ArgsJSON),
   #get_messages{nick = Nick, pass=Pass, id = DID}=Args,
   case is_authorised(Nick,Pass,Socket) of
     true->
-      D=dialogue_controller:get_dialogue(DID),
+      D=dialogue_controller:get_dialogue(DID, Con),
       case D of
         {error,_R}->
           handle_error(_R,Socket);
         D->
-          Res = dialogue_controller:get_messages(D),
+          Res = dialogue_controller:get_messages(D, Con),
           handle_request_result(
             Res,
             fun(Y)-> name_gen:encodeRecordArray(Y,fun(X)->?record_to_json(message,X) end) end,
@@ -241,16 +241,16 @@ get_messages_handler(ArgsJSON, Socket)->
     false->ok
   end.
 
-read_message_handler(ArgsJSON,Socket)->
+read_message_handler(ArgsJSON,Socket, Con)->
   Args = ?json_to_record(read_message,ArgsJSON),
   #read_message{nick = Nick,pass = Pass, id = MID}=Args,
   case is_authorised(Nick,Pass,Socket) of
     true->
-      case dialogue_controller:get_message(MID) of
+      case dialogue_controller:get_message(MID, Con) of
         {error,_R}->
           handle_error(_R,Socket);
         M->
-          Res = dialogue_controller:read_message(M),
+          Res = dialogue_controller:read_message(M, Con),
           handle_request_result(
             Res,
             fun(X)-> ?record_to_json(message,X) end,
@@ -259,16 +259,16 @@ read_message_handler(ArgsJSON,Socket)->
     false->ok
   end.
 
-change_text_handler(ArgsJSON,Socket)->
+change_text_handler(ArgsJSON,Socket, Con)->
   Args = ?json_to_record(change_text,ArgsJSON),
   #change_text{nick = Nick,pass = Pass,id=MID,text = Text}=Args,
   case is_authorised(Nick,Pass,Socket) of
     true->
-      case dialogue_controller:get_message(MID) of
+      case dialogue_controller:get_message(MID, Con) of
         {error,_R}->
           handle_error(_R,Socket);
         M->
-          Res = dialogue_controller:change_text(M,Text),
+          Res = dialogue_controller:change_text(M,Text, Con),
           handle_request_result(
             Res,
             fun(X)-> ?record_to_json(message,X) end,
@@ -277,17 +277,17 @@ change_text_handler(ArgsJSON,Socket)->
     false->ok
   end.
 
-delete_message_handler(ArgsJSON,Socket)->
+delete_message_handler(ArgsJSON,Socket, Con)->
   Args = ?json_to_record(delete_message,ArgsJSON),
   #delete_message{nick = Nick,pass = Pass,messageID = MID, dialogueID = DID}=Args,
   case is_authorised(Nick,Pass,Socket) of
     true->
       User = #user{nick = Nick,pass = Pass},
-      M=dialogue_controller:get_message(MID),
-      D=dialogue_controller:get_dialogue(DID),
+      M=dialogue_controller:get_message(MID, Con),
+      D=dialogue_controller:get_dialogue(DID, Con),
       if
         is_record(M,message) and is_record(D,dialogue)->
-          Res = dialogue_controller:delete_message(D,M,User),
+          Res = dialogue_controller:delete_message(D,M,User, Con),
           handle_request_result(
             Res,
             fun(X)->atom_to_list(X) end,

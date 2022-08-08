@@ -10,47 +10,47 @@
 -include("entity.hrl").
 
 %% API
--export([create_dialogue/1,
-        get_dialogue/1,
-        get_dialogues/1,
-        get_message/1,
-        get_messages/1,
-        quit_dialogue/2,
-        add_message/2,
-        read_message/1,
-        change_text/2,
-        delete_message/3,
-        delete_dialogue/1]).
+-export([create_dialogue/2,
+        get_dialogue/2,
+        get_dialogues/2,
+        get_message/2,
+        get_messages/2,
+        quit_dialogue/3,
+        add_message/3,
+        read_message/2,
+        change_text/3,
+        delete_message/4,
+        delete_dialogue/2]).
 
-create_dialogue(Dialogue)->
-  dialogue_service:create_dialogue(Dialogue).
+create_dialogue(Dialogue, Con)->
+  dialogue_service:create_dialogue(Dialogue, Con).
 
-get_dialogue(ID)->
-  dialogue_service:get_dialogue(ID).
+get_dialogue(ID, Con)->
+  dialogue_service:get_dialogue(ID, Con).
 
-get_dialogues(U)->
-  dialogue_service:get_dialogues(U).
+get_dialogues(U, Con)->
+  dialogue_service:get_dialogues(U, Con).
 
-quit_dialogue(D,U)->
-  dialogue_service:quit_dialogue(D,U).
+quit_dialogue(D,U, Con)->
+  dialogue_service:quit_dialogue(D,U, Con).
 
-get_message(MID)->
-  dialogue_service:get_message(MID).
+get_message(MID, Con)->
+  dialogue_service:get_message(MID, Con).
 
-get_messages(D)->
-  dialogue_service:get_messages(D).
+get_messages(D, Con)->
+  dialogue_service:get_messages(D, Con).
 
-add_message(D,M)->
-  dialogue_service:add_message(D,M).
+add_message(D,M, Con)->
+  dialogue_service:add_message(D,M, Con).
 
-read_message(M)->
-  dialogue_service:read_message(M).
+read_message(M, Con)->
+  dialogue_service:read_message(M, Con).
 
-change_text(M,Text)->
-  dialogue_service:change_text(M,Text).
+change_text(M,Text, Con)->
+  dialogue_service:change_text(M,Text, Con).
 
-delete_message(D,M,U)->
-  dialogue_service:delete_message(D,M,U).
+delete_message(D,M,U, Con)->
+  dialogue_service:delete_message(D,M,U, Con).
 
-delete_dialogue(D)->
-  dialogue_service:delete_dialogue(D).
+delete_dialogue(D, Con)->
+  dialogue_service:delete_dialogue(D, Con).

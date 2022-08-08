@@ -10,7 +10,13 @@
 -include("entity.hrl").
 
 %% API
--export([create_table/0,write/1,read/1, read_by_User/1, fetch_messages/1, update/1, delete/1]).
+-export([create_table/0,
+        write/2,
+        read/2,
+        read_by_User/2,
+        fetch_messages/2,
+        update/2,
+        delete/2]).
 
 create_table()->
   mnesia:create_table(dialogue,
@@ -22,54 +28,20 @@ create_table()->
       {disc_copies, [node()]}
     ]).
 
-write(Dialogue)->
-  ID = seq:get_counter(dialogue),
-  Commited = Dialogue#dialogue{id=ID},
-  mnesia:write(Commited),
-  [Obj|_]=mnesia:read(dialogue,ID),
-  Obj.
+write(Dialogue, Con)->
+  redis_dialogue:write(Con,Dialogue).
 
-read(ID)->
-  mnesia:read(dialogue,ID).
+read(ID, Con)->
+  redis_dialogue:read(Con,ID).
 
-read_by_User(User)->
-   mnesia:foldl(
-    fun(Dialogue, Res)->
-      case dialogue_service:containsUser(Dialogue,User) of
-        true->
-          [Dialogue|Res];
-        _->
-          Res
-      end
-    end,
-    [],
-    dialogue).
+read_by_User(User, Con)->
+  redis_dialogue:read_by_user(Con,User).
 
-fetch_messages(#dialogue{messages = Messages}=_D)->
-  lists:foldl(
-    fun(MID,Res)->
-      case message_repo:read(MID) of
-        [] -> Res;
-        [M|_] -> [M|Res]
-      end
-    end, [], Messages).
+fetch_messages(#dialogue{}=D, Con)->
+  redis_dialogue:fetch_messages(Con,D).
 
+update(DialogueNew, Con)->
+  redis_dialogue:update(Con,DialogueNew).
 
-update(DialogueNew)->
-  mnesia:write(DialogueNew).
-
-%%Каскадно удаляет все сообшения из диалога, т.к. сообщения вне диалога не имеют смысла
-delete(#dialogue{id=ID,messages = MessageIDS})->
-  io:format("TRACE dialogue_repo:delete/1 id=~p, messages=~p~n",[ID,MessageIDS]),
-  case MessageIDS of
-    undefined->
-      io:format("TRACE dialogue_repo:delete/1 Dialogue messages undefined~n"),
-      mnesia:delete({dialogue,ID});
-    []->
-      io:format("TRACE dialogue_repo:delete/1 Dialogue hasn't messages~n"),
-      mnesia:delete({dialogue,ID});
-    MessageIDS->
-      io:format("TRACE dialogue_repo:delete/1 Dialogue has messages~n"),
-      lists:map(fun(MID)->message_repo:delete(#message{id=MID}) end, MessageIDS),
-      mnesia:delete({dialogue,ID})
-  end.
+delete(#dialogue{}=Dialogue, Con)->
+  redis_dialogue:delete(Con,Dialogue).

@@ -10,23 +10,23 @@
 -include("entity.hrl").
 
 %% API
--export([create_table/0,write/1,read/1,read/2,update/1,delete/1]).
+-export([create_table/0,
+        write/2,
+        read/2,
+        read/3,
+        update/2,
+        delete/2]).
 
 create_table()-> ok.
 
-write(User)->
-  case read(User#user.nick) of
-    []->
-      mnesia:write(User),
-      User;
-    _Obj-> redis_transaction:abort_transaction(already_exists)
-  end.
+write(User, Con)->
+  redis_user:write(Con,User).
 
-read(Nick)->
-  mnesia:read(user,Nick).
+read(Nick, Con)->
+  redis_user:read(Con,Nick).
 
-read(Nick,Pass)->
-  U=read(Nick),
+read(Nick,Pass, Con)->
+  U=read(Nick, Con),
   case U of
     [User|_] when User#user.pass =:= Pass->
       [User];
@@ -35,9 +35,8 @@ read(Nick,Pass)->
     [] -> []
   end.
 
-update(UserNew) ->
-  mnesia:write(UserNew).
+update(UserNew, Con) ->
+  redis_user:update(Con,UserNew).
 
-delete(User) ->
-  Nick = User#user.nick,
-  mnesia:delete({user,Nick}).
+delete(#user{nick = Nick}, Con) ->
+  redis_user:delete(Con,Nick).

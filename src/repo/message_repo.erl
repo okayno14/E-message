@@ -10,7 +10,11 @@
 -include("entity.hrl").
 
 %% API
--export([create_table/0, read/1, write/1,update/1,delete/1]).
+-export([create_table/0,
+        read/2,
+        write/2,
+        update/2,
+        delete/2]).
 
 create_table()->
   mnesia:create_table(message,
@@ -21,19 +25,15 @@ create_table()->
       {disc_copies, [node()]}
     ]).
 
-write(Message)->
-  ID = seq:get_counter(seq),
-  Commited=Message#message{id=ID},
-  mnesia:write(Commited),
-  [Obj|_]=mnesia:read(message,ID),
-  Obj.
+write(Message, Con)->
+  redis_message:write(Con,Message).
 
-read(ID)->
-  mnesia:read(message,ID).
+read(ID, Con)->
+  redis_message:read(Con,ID).
 
-update(Message)->
-  mnesia:write(Message).
+update(Message, Con)->
+  redis_message:update(Con,Message).
 
 %%Каскадно удаляются артефакты, так как вне сообщений они не имеют смысла
-delete(#message{id=MID})->
-  mnesia:delete({message, MID}).
+delete(#message{}=Message, Con)->
+  redis_message:delete(Con,Message).

@@ -16,7 +16,7 @@
 %%{ok, Connection}
 %%{error, Cause}
 start_db()->
-  connect("localhost",6379,"","").
+  eredis:start_link().
 
 start_db(Domain,Port,User,Pass)->
   connect(Domain,Port,User,Pass).

@@ -13,19 +13,27 @@
 %% API
 -export([write/2,
         read/2,
-        read_by_user/2]).
+        read_by_user/2,
+        fetch_messages/2,
+        update/2]).
 
 %%записать пользователей
+%%записать метаданные диалога
 write(Con,#dialogue{users = Nicks} = Dialogue)->
   {ok, DID} = eredis:q(Con,["INCR", "SeqDial"]),
   %%Специально зануляю коллекцию ников, так как эта информация будет храниться в множестве
   Commited = Dialogue#dialogue{id=DID, users = undefined},
-  {ok,_} = eredis:q(Con,["HSET",atom_to_list(dialogue),DID,?record_to_json(dialogue,Commited)]),
-  write_users(Con, Commited, Nicks),
+
+  eredis:q(Con,["MULTI"]),
+    {ok,_} = eredis:q(Con,["HSET",atom_to_list(dialogue),DID,?record_to_json(dialogue,Commited)]),
+    write_users(Con, Commited, Nicks),
+  {ok,_}=eredis:q(Con,["EXEC"]),
+
   Dialogue#dialogue{id = binary_to_integer(DID)}.
 
 %%прочитать пользователей ok
-%%прочитать сообщения
+%%прочитать сообщения ok.
+%% Сообщения читаются в обратном порядке, чтобы при обходе сообщений они вернулись в правильной временной последовательности
 read(Con, DID) when is_integer(DID)->
   {ok, T} = eredis:q(Con,["HGET",atom_to_list(dialogue),DID]),
   case T of
@@ -33,7 +41,7 @@ read(Con, DID) when is_integer(DID)->
     JSON ->
       Dialogue = ?json_to_record(dialogue,JSON),
       {ok,Users} = eredis:q(Con,["SMEMBERS", name_gen:gen_dialogue_user_name(Dialogue)]),
-      {ok,Messages} = eredis:q(Con,["ZRANGE",name_gen:gen_dialogue_message_name(Dialogue),0,-1]),
+      {ok,Messages} = eredis:q(Con,["ZREVRANGE",name_gen:gen_dialogue_message_name(Dialogue),0,-1]),
       [Dialogue#dialogue{users = Users, messages=Messages}]
   end.
 
@@ -60,27 +68,50 @@ read_by_user(Con,#user{nick = Nick})->
     end,
   lists:foldl(Fun,[],Sets).
 
+%%надо потестить
+fetch_messages(Con,#dialogue{messages = Messages})->
+  Fun=
+    fun(MID,Res)->
+      {ok, M}=eredis:q(Con,["HGET", atom_to_list(message),MID]),
+      [M|Res]
+    end,
+  lists:foldl(Fun,[],Messages).
 
-%%zrange dialogue:<DID>:message 0 -1
-%%fetch_messages
-
-
-%%переписать сообщения
-%%переписать пользователей
-
-%%update(Con, Dialogue)->
-%%  %%message_write
-%%
+%%переписать сообщения ok
+%%переписать пользователей ok
+update(Con,#dialogue{users = Nicks, id=DID}=Dialogue)->
+  %%Получить сообщения
+  M_List = fetch_messages(Con,Dialogue),
+  eredis:q(Con,["MULTI"]),
+    %%пересоздать дерево сообщений
+    write_messages(Con,Dialogue,M_List),
+    %%Записать множество пользователей
+    write_users(Con,Dialogue,Nicks),
+    %%Переписать метаданные диалога
+    Commited = Dialogue#dialogue{id=DID, users = undefined},
+    {ok,_} = eredis:q(Con,["HSET",atom_to_list(dialogue),DID,?record_to_json(dialogue,Commited)]),
+  {ok,_}=eredis:q(Con,["EXEC"]),
+  Dialogue.
 
 
 %%DID - бинарная строка, в которой записан численный ID
 write_users(Con,#dialogue{}=Dialogue, Nicks)->
-  eredis:q(Con,["MULTI"]),
+  DU_Set = name_gen:gen_dialogue_user_name(Dialogue),
   lists:map(
   fun(Nick)->
-    eredis:q(Con,["SADD", name_gen:gen_dialogue_user_name(Dialogue), Nick])
+    eredis:q(Con,["SADD",DU_Set, Nick])
   end,
-  Nicks),
-  {ok,_} = eredis:q(Con,["EXEC"]).
+  Nicks).
+
+write_messages(Con, #dialogue{}=Dialogue, M_List)->
+  DM_Tree = name_gen:gen_dialogue_message_name(Dialogue),
+  %%Удалить дерево сообщений
+  {ok,_}=eredis:q(Con,["DEL",DM_Tree]),
+  Fun =
+    fun(#message{timeSending = TIME,id = MID})->
+      eredis:q(Con,["ZADD",DM_Tree,TIME,MID])
+    end,
+  %%Создать новое дерево сообщений
+  lists:map(Fun,M_List).
 
 

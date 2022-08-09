@@ -6,7 +6,7 @@
 %%% @end
 %%% Created : 25. июль 2022 11:23
 %%%-------------------------------------------------------------------
--module(server).
+-module(acceptor).
 -include("jsonerl/jsonerl.hrl").
 -include("request.hrl").
 -include("entity.hrl").

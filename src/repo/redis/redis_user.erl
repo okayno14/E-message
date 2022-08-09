@@ -23,6 +23,7 @@
 %%read-операции - фильтры, поэтому они возвращают пустой или заполненный список
 %%update-операции - возвращают новый объект
 %%delete - ok
+%%ошибка - {error, Reason}
 
 write(Con,#user{nick = Nick}=User)->
   case read(Con,Nick) of
@@ -35,7 +36,8 @@ write(Con,#user{nick = Nick}=User)->
 read(Con,Nick)->
   {ok, T} = eredis:q(Con,["HGET",atom_to_list(user),Nick]),
   case T of
-    undefined -> [];
+    undefined ->
+      [];
     _->
       [?json_to_record(user,T)]
   end.

@@ -43,7 +43,7 @@ get_dialogues(U, Con)->
     fun()->
       dialogue_repo:read_by_User(U, Con)
     end,
-  service:extract_values(redis_transaction:begin_transaction(F)).
+  service:extract_multiple_values(redis_transaction:begin_transaction(F)).
 
 get_message(MID, Con)->
   F=
@@ -57,7 +57,7 @@ get_messages(D, Con)->
   fun()->
     dialogue_repo:fetch_messages(D, Con)
   end,
-  service:extract_values(redis_transaction:begin_transaction(F)).
+  service:extract_multiple_values(redis_transaction:begin_transaction(F)).
 
 quit_dialogue(#dialogue{users = Nick_List}=D,#user{nick = Nick}=U, Con)->
   case dialogue:containsUser(D,U) of

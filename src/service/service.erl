@@ -8,13 +8,13 @@
 %%%-------------------------------------------------------------------
 -module(service).
 -author("aleksandr_work").
+-export([extract_single_value/1,
+        extract_multiple_values/1]).
 
-%% API
--export([extract_single_value/1, extract_values/1]).
-
-%%Обобщенная функция, обрабатывающая результат транзакции,
-%%возвращающей результат mnesia:read.
-%%Но с точки зрения бизнес-модели результат обязан быть единственным.
+%%Функция обработки read-операции репозитория.
+%%Необходима, если с точки зрения бизнес-процесса результат:
+%%    1) обязан быть найден
+%%    2) должен быть единственным
 extract_single_value(Transaction)->
   case Transaction of
     {error,_R}->{error,_R};
@@ -22,9 +22,11 @@ extract_single_value(Transaction)->
     [Res|_]->Res
   end.
 
-%%аналог предыдущей, но предназначена для
-%%чтений с несколькими результатами
-extract_values(Transaction)->
+%%Функция обработки read-операции репозитория.
+%%Необходима, если с точки зрения бизнес-процесса результат:
+%%    1) обязан быть найден
+%%    2) допускается несколько объектов
+extract_multiple_values(Transaction)->
   case Transaction of
     {error,_Reason}->{error,_Reason};
     []->{error,not_found};

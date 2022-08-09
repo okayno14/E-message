@@ -11,23 +11,15 @@
 
 -include("config.hrl").
 
--export([start/1,start/0]).
+-export([start/0,
+        start/1,
+        init/1]).
 
 start(ConfPath)->
-  Me = self(),
-  io:format("INFO e-message:start/1. E-message started. Root_pid = ~p~n",[Me]),
-  register(e_message,Me),
-  {ok,Text_Bin}=file:read_file(ConfPath),
-  Conf=?json_to_record(config,Text_Bin),
-  init(Conf).
+  start_observer(parse_conf(ConfPath)).
 
 start()->
-  Me = self(),
-  io:format("INFO e-message:start/1. E-message started. Root_pid = ~p~n",[Me]),
-  register(e_message,Me),
-  {ok,Text_Bin}=file:read_file("priv/etc/config.json"),
-  Conf=?json_to_record(config,Text_Bin),
-  init(Conf).
+  start_observer(parse_conf("priv/etc/config.json")).
 
 init(#config{port = Port, acceptors_quantity = N})->
   process_flag(trap_exit, true),
@@ -54,11 +46,22 @@ loop(AcceptorList,ListenSocket,Con)->
           loop(AcceptorList_N,ListenSocket,Con)
       end;
     {stop, From}->
+      io:format("TRACE e-message:loop/3. Received stop-message from ~p~n",[From]),
       terminate_children(AcceptorList,Con),
-      From ! ok
+      io:format("TRACE e-message:loop/3. Sending answer~n"),
+      From ! stopped
   end.
 
 %%вспомогательные функции
+parse_conf(ConfPath)->
+  {ok,Text_Bin}=file:read_file(ConfPath),
+  ?json_to_record(config,Text_Bin).
+
+start_observer(Conf)->
+  Me = self(),
+  io:format("INFO e-message:start/1. E-message started. Root_pid = ~p~n",[Me]),
+  register(e_message,spawn_link(?MODULE,init,[Conf])).
+
 start_repo()->
   case (catch db:start_db()) of
     {ok,Con}->
@@ -98,14 +101,18 @@ restart_acceptor(PID,ListenSocket,Con,AcceptorList)->
 
 %%пока что сервер с БД просто убивается
 terminate_children([],Con)->
+  io:format("INFO e_message:terminate_children. Sending kill to Repo~n"),
   exit(Con,kill);
 %%Число взял с потолка
-terminate_children([PID,Tail],Con)->
+terminate_children([PID|Tail],Con)->
+  io:format("INFO e_message:terminate_children. Trying stop child ~p~n",[PID]),
   PID ! {stop,self()},
   receive
     ok ->
       terminate_children(Tail,Con)
     after
-      50000->
-        exit(PID,kill)
+      100->
+        io:format("INFO e_message:terminate_children. Child ~p won't stop. Sending kill~n",[PID]),
+        exit(PID,kill),
+        terminate_children(Tail,Con)
   end.

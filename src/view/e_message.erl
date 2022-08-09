@@ -50,7 +50,7 @@ loop(AcceptorList,ListenSocket,Con)->
       io:format("TRACE e-message:loop/3. Received stop-message from ~p~n",[From]),
       terminate_children(AcceptorList,Con),
       io:format("TRACE e-message:loop/3. STOP. Sending answer~n"),
-      From ! stopped
+      From ! ok
   end.
 
 %%вспомогательные функции
@@ -85,7 +85,7 @@ start_acceptors(Num,ListenSocket,Con,Res)->
   end.
 
 start_acceptor(ListenSocket,Con)->
-  {ok,spawn_link(acceptor,start,[ListenSocket,Con])}.
+  {ok,spawn_link(acceptor, start,[ListenSocket,Con])}.
 
 restart_acceptor(PID,ListenSocket,Con,AcceptorList)->
   Fun =

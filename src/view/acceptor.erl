@@ -12,27 +12,38 @@
 -include("entity.hrl").
 -include("config.hrl").
 %% API
--export([start/2,
-        time_millis/0,
-        parseRequest/1]).
+-export([start/2]).
 
 start(ListenSocket,Con)->
-  case gen_tcp:accept(ListenSocket) of
-    {ok, Socket} ->
-      loop(Socket,Con),
-      start(ListenSocket,Con);
-    {error, Reason}->
-      io:format("ERROR server:wait_request Socket ~w [~w] can't accept session. Reason:~p~n",[ListenSocket, self(),Reason])
+  %%init
+  loop(ListenSocket,Con).
+
+%%Перед принятием клиенсткой сессии акцептор ждёт
+%%сигналы от супервизора, т.к. в этот момент он не занят обслуживанием клиента
+%%если ничего не пришло, то акцептор встанет в очередь на обслуживание
+loop(ListenSocket,Con)->
+  receive
+    {stop,From}->
+      io:format("TRACE acceptor:loop/2. Received stop message~n"),
+      From ! ok
+  after
+    500->
+      case gen_tcp:accept(ListenSocket) of
+        {ok, Socket} ->
+          serve_connection(Socket,Con),
+          loop(ListenSocket,Con);
+        {error, Reason}->
+          io:format("ERROR server:wait_request Socket ~w [~w] can't accept session. Reason:~p~n",[ListenSocket, self(),Reason])
+      end
   end.
 
-%%функция-цикл работы потока-акцептора
-loop(Socket,Con)->
+serve_connection(Socket,Con)->
   inet:setopts(Socket,[{active,once}]),
   receive
     {tcp,Socket,Request}->
       io:format("INFO server:loop/1 Socket ~w [~w] received request ~n", [Socket, self()]),
-      process_request(Socket,Request,Con),
-      loop(Socket,Con);
+      serve_request(Socket,Request,Con),
+      serve_connection(Socket,Con);
     {tcp_closed,Socket}->
       io:format("INFO server:loop/1 Socket ~w closed [~w]~n",[Socket,self()]),
       ok
@@ -42,7 +53,7 @@ time_millis()->
   round(erlang:system_time()/1.0e7).
 
 %%обработка клиентских запросов
-process_request(Socket, Request,Con)->
+serve_request(Socket, Request,Con)->
   [Fun,ArgsJSON]=parseRequest(Request),
   case Fun of
     create_user->

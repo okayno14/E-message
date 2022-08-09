@@ -12,38 +12,15 @@
 -include("entity.hrl").
 -include("config.hrl").
 %% API
--export([start/0,
-        start_acceptor/2,
+-export([start/2,
         time_millis/0,
         parseRequest/1]).
 
-start() ->
-  {ok,Con}=db:start_db(),
-  {ok,Text_Bin}=file:read_file("priv/etc/config.json"),
-  Conf=?json_to_record(config,Text_Bin),
-  #config{port = Port,acceptors_quantity = N}=Conf,
-  case  gen_tcp:listen(Port,[{active, false}]) of
-    {ok, ListenSocket}->
-      io:format("INFO server:start/0 Server started. Port=~w~n",[Port]),
-      start_servers(N,ListenSocket,Con),
-      io:format("INFO server:start/0 Started ~w acceptors~n",[N]),
-      %%замораживает listen-процесс
-      timer:sleep(infinity);
-    {error, Reason}->
-      io:format("FATAL Can't listen port.~n~p~n",[Reason])
-  end.
-
-start_servers(0,_,_)-> ok;
-start_servers(Num, ListenSocket,Con)->
-  spawn(?MODULE,start_acceptor,[ListenSocket,Con]),
-  io:format("INFO server:start_servers/2 Acceptor#~w spawned~n",[Num]),
-  start_servers(Num-1,ListenSocket,Con).
-
-start_acceptor(ListenSocket,Con)->
+start(ListenSocket,Con)->
   case gen_tcp:accept(ListenSocket) of
     {ok, Socket} ->
       loop(Socket,Con),
-      start_acceptor(ListenSocket,Con);
+      start(ListenSocket,Con);
     {error, Reason}->
       io:format("ERROR server:wait_request Socket ~w [~w] can't accept session. Reason:~p~n",[ListenSocket, self(),Reason])
   end.

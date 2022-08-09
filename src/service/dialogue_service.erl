@@ -64,15 +64,17 @@ quit_dialogue(#dialogue{users = Nick_List}=D,#user{nick = Nick}=U, Con)->
     true->
       io:format("TRACE dialogue_service:quit_dialogue/2 User contains in dialogue~n"),
       if
+        %%диалог нужно удалить
         length(Nick_List) =:= 1 ->
           T=delete_dialogue(D, Con),
           io:format("TRACE dialogue_service:quit_dialogue/2 Delete transaction:~p~n",[T]),
-          T;
+          ok;
+        %%из диалога просто убирается 1 участник
         length(Nick_List) >1 ->
           Arr = lists:filter(fun(Elem)-> Elem =/= Nick end, Nick_List),
           D1=D#dialogue{users = Arr},
           Fun=fun()-> dialogue_repo:update(D1, Con) end,
-          T1= redis_transaction:begin_transaction(Fun),
+          T1=redis_transaction:begin_transaction(Fun),
           io:format("TRACE dialogue_service:quit_dialogue/2 Update transaction:~p~n",[T1]),
           T1
       end;

@@ -182,10 +182,18 @@ quit_dialogue_handler(ArgsJSON,Socket, Con)->
           handle_error(_R,Socket);
         D->
           Res = dialogue_controller:quit_dialogue(D,_U, Con),
-          handle_request_result(
-            Res,
-            fun(X)->atom_to_list(X) end,
-            Socket)
+          if
+            is_record(Res,dialogue)->
+              handle_request_result(
+                Res,
+                fun(X)->?record_to_json(dialogue,X) end,
+                Socket);
+            is_atom(Res)->
+              handle_request_result(
+                Res,
+                fun(X)->atom_to_list(X) end,
+                Socket)
+          end
       end;
     false->
       io:format("TRACE server:quit_dialogue_handler/2 User not_authorised~n"),

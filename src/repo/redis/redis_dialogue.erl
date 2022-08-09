@@ -43,7 +43,8 @@ read(Con, DID) when is_integer(DID)->
       Dialogue = ?json_to_record(dialogue,JSON),
       {ok,Users} = eredis:q(Con,["SMEMBERS", name_gen:gen_dialogue_user_name(Dialogue)]),
       {ok,Messages} = eredis:q(Con,["ZREVRANGE",name_gen:gen_dialogue_message_name(Dialogue),0,-1]),
-      [Dialogue#dialogue{users = Users,
+      [Dialogue#dialogue{id = DID,
+                        users = Users,
                         messages=lists:map(fun(MID_JSON)->binary_to_integer(MID_JSON) end,
                                           Messages)}]
   end.
@@ -133,11 +134,6 @@ rewrite_messages(Con, #dialogue{}=Dialogue, M_ListJSON)->
   DEL_TREE_RES=eredis:q(Con,["DEL",DM_Tree]),
   io:format("TRACE redis:rewrite_messages/3 DEL_TREE_RES: ~p~n",[DEL_TREE_RES]),
   {ok,_}=DEL_TREE_RES,
-%%  Fun =
-%%    fun(M)->
-%%      #message{timeSending = TIME,id = MID}=M,
-%%      eredis:q(Con,["ZADD",DM_Tree,TIME,MID])
-%%    end,
   Fun =
     fun(MJSON)->
       M=?json_to_record(message,MJSON),

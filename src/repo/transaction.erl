@@ -10,13 +10,16 @@
 -author("aleksandr_work").
 
 %% API
--export([begin_transaction/1, abort_transaction/1]).
+-export([begin_transaction/1,
+        abort_transaction/0]).
 
+%%Fun/0 функция с телом транзакции.
+%%Тело транзакции - набор действий языка среди которых есть операции, предоставляемые репозиторием.
+%%Каждая функция репозитория - обращение к базе
+%%Следовательно, заворачивая множество функций репозитория в транзакции мы заворачиваем и обращения к базе.
+%%Транзакция исполняется если её не отменили.
 begin_transaction(Fun)->
-  case mnesia:transaction(Fun) of
-    {atomic, _Res}->_Res;
-    {aborted, _Reason}-> {error,_Reason}
-  end.
+  redis_transaction:begin_transaction(Fun).
 
-abort_transaction(Reason)->
-  mnesia:abort(Reason).
+abort_transaction()->
+  redis_transaction:abort_transaction().

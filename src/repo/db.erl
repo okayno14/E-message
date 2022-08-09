@@ -4,19 +4,17 @@
 %%% @doc
 %%%
 %%% @end
-%%% Created : 07. авг. 2022 10:21
+%%% Created : 09. авг. 2022 12:11
 %%%-------------------------------------------------------------------
--module(redis_db).
+-module(db).
 -author("aleksandr_work").
 
 %% API
--export([start_db/0, start_db/4]).
+-export([start_db/0,
+        start_db/4]).
 
-%%Подключиться к БД, создать структуры, если их нет
-%%{ok, Connection}
-%%{error, Cause}
 start_db()->
-  eredis:start_link().
+  redis_db:start_db().
 
 start_db(Domain,Port,_User,Pass)->
-  eredis:start_link(Domain, Port, 0, Pass, 0).
+  redis_db:start_db(Domain,Port,_User,Pass).

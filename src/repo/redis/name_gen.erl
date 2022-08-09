@@ -29,6 +29,12 @@ gen_dialogue_message_name(#dialogue{id = DID})->
 gen_dialogue_user_search_pattern()->
   [atom_to_list(dialogue)|[":*:"|atom_to_list(user)]].
 
+%%КА для парсинга DID из строки:
+%%слова входного алфавита: извлекаются из Query - анализируемой строки
+%%состояние: входная целочисленная переменная State
+%%отображение входного слова на состояние: функция ЯП.
+%%выход: возвращаемое функцией значение
+%%начальное состояние: 1
 parse_DID_from_dialogue_message(Query)->
   parse_DID_from_dialogue_message(Query,1).
 

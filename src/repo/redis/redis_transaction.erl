@@ -10,7 +10,8 @@
 -author("aleksandr_work").
 
 %% API
--export([begin_transaction/1]).
+-export([begin_transaction/1,
+        abort_transaction/0]).
 
 %%Для совместимости со старым API
 %%Res || {error, Cause}
@@ -19,3 +20,6 @@ begin_transaction(Fun)->
     {error,_R}->{error,_R};
     Res -> Res
   end.
+
+abort_transaction()->
+  throw(transaction_aborted).

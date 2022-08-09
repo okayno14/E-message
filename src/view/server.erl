@@ -18,7 +18,7 @@
         parseRequest/1]).
 
 start() ->
-  {ok,Con}=eredis:start_link(),
+  {ok,Con}=db:start_db(),
   {ok,Text_Bin}=file:read_file("priv/etc/config.json"),
   Conf=?json_to_record(config,Text_Bin),
   #config{port = Port,acceptors_quantity = N}=Conf,

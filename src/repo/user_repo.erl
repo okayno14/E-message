@@ -8,32 +8,30 @@
 %%%-------------------------------------------------------------------
 -module(user_repo).
 -include("entity.hrl").
+-export([write/2,
+        read/2,
+        read/3,
+        update/2,
+        delete/2]).
 
-%% API
--export([create_table/0,write/1,read/1,read/2,update/1,delete/1]).
+%%create-операции должны возвращать 1 персистентный объект
+%%read-операции - фильтры, поэтому они возвращают пустой или заполненный список
+%%update-операции - возвращают новый объект
+%%delete - ok
+%%ошибка - {error, Reason}
 
-create_table()->
-  mnesia:create_table(user,
-    [
-      {record_name, user},
-      {type, set},
-      {attributes, record_info(fields,user)},
-      {disc_copies, [node()]}
-    ]).
+%%Если произошла ошибка соединения с источником -> значит, что вся система становится бесполезной->
+%%ошибка критическая и должна быть послана на самый верх
 
-write(User)->
-  case read(User#user.nick) of
-    []->
-      mnesia:write(User),
-      User;
-    _Obj->transaction:abort_transaction(already_exists)
-  end.
+%%нельзя создавать новый объект с зарегистрированным идентификатором
+write(User, Con)->
+  redis_user:write(Con,User).
 
-read(Nick)->
-  mnesia:read(user,Nick).
+read(Nick, Con)->
+  redis_user:read(Con,Nick).
 
-read(Nick,Pass)->
-  U=read(Nick),
+read(Nick,Pass, Con)->
+  U=read(Nick, Con),
   case U of
     [User|_] when User#user.pass =:= Pass->
       [User];
@@ -42,9 +40,8 @@ read(Nick,Pass)->
     [] -> []
   end.
 
-update(UserNew) ->
-  mnesia:write(UserNew).
+update(UserNew, Con) ->
+  redis_user:update(Con,UserNew).
 
-delete(User) ->
-  Nick = User#user.nick,
-  mnesia:delete({user,Nick}).
+delete(#user{nick = Nick}, Con) ->
+  redis_user:delete(Con,Nick).

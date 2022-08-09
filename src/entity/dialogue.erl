@@ -16,7 +16,6 @@ containsUser(#dialogue{users = Users}=_Dialogue, #user{nick = Nick2}=_User) ->
   lists:any(fun(Nick)->Nick=:=Nick2 end,Users).
 
 add_message(#dialogue{messages = Messages}=D,#message{id = MID})->
-  case Messages of
-    undefined->D#dialogue{messages = [MID]};
-    List->D#dialogue{messages = [MID|List]}
-  end.
+  Res=D#dialogue{messages = [MID|Messages]},
+  io:format("TRACE dialogue:add_message/2 Res: ~p~n",[Res]),
+  Res.

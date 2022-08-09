@@ -11,21 +11,22 @@
 
 
 %% API
--export([create_user/1,get_user/2]).
+-export([create_user/2,
+        get_user/3]).
 
-create_user(User)->
+create_user(User, Con)->
   F=
     fun()->
-      user_repo:write(User)
+      user_repo:write(User, Con)
     end,
-  transaction:begin_transaction(F).
+  redis_transaction:begin_transaction(F).
 
-get_user(Nick,Pass)->
+get_user(Nick,Pass, Con)->
   F=
     fun()->
-      user_repo:read(Nick,Pass)
+      user_repo:read(Nick,Pass, Con)
     end,
-  T=transaction:begin_transaction(F),
+  T= redis_transaction:begin_transaction(F),
   service:extract_single_value(T).
 
 

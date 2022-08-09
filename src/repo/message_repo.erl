@@ -8,32 +8,29 @@
 %%%-------------------------------------------------------------------
 -module(message_repo).
 -include("entity.hrl").
+-export([read/2,
+        write/2,
+        update/2,
+        delete/2]).
 
-%% API
--export([create_table/0, read/1, write/1,update/1,delete/1]).
+%%create-операции должны возвращать 1 персистентный объект
+%%read-операции - фильтры, поэтому они возвращают пустой или заполненный список
+%%update-операции - возвращают новый объект
+%%delete - ok
+%%ошибка - {error, Reason}
 
-create_table()->
-  mnesia:create_table(message,
-    [
-      {record_name, message},
-      {type, set},
-      {attributes, record_info(fields, message)},
-      {disc_copies, [node()]}
-    ]).
+%%Если произошла ошибка соединения с источником -> значит, что вся система становится бесполезной->
+%%ошибка критическая и должна быть послана на самый верх
 
-write(Message)->
-  ID = seq:get_counter(seq),
-  Commited=Message#message{id=ID},
-  mnesia:write(Commited),
-  [Obj|_]=mnesia:read(message,ID),
-  Obj.
+write(Message, Con)->
+  redis_message:write(Con,Message).
 
-read(ID)->
-  mnesia:read(message,ID).
+read(ID, Con)->
+  redis_message:read(Con,ID).
 
-update(Message)->
-  mnesia:write(Message).
+update(Message, Con)->
+  redis_message:update(Con,Message).
 
 %%Каскадно удаляются артефакты, так как вне сообщений они не имеют смысла
-delete(#message{id=MID})->
-  mnesia:delete({message, MID}).
+delete(#message{}=Message, Con)->
+  redis_message:delete(Con,Message).

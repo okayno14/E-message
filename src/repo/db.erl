@@ -4,46 +4,23 @@
 %%% @doc
 %%%
 %%% @end
-%%% Created : 28. июль 2022 18:26
+%%% Created : 09. авг. 2022 12:11
 %%%-------------------------------------------------------------------
 -module(db).
 -author("aleksandr_work").
+-export([start_db/0,
+        start_db/4]).
 
-%% API
--export([start_db/0]).
+%%Модуль для управления соединением с бд
 
-%%вызывается функция create_tables
-%%таким образом будет единая точка поднятия базы, которая либо создаст пустую,
-%%либо откроет заполненную
+%%Подключиться к БД, создать структуры, если их нет
+%%{ok, Connection}
+%%{error, Cause}
 start_db()->
-  create_schema(),
-  io:format("Schema created~n"),
-  application:start(mnesia),
-  io:format("DB started~n"),
-  create_tables(),
-  io:format("Tables created~n"),
-  wait_tables(),
-  io:format("Tables initialized~n").
+  redis_db:start_db().
 
-create_schema()->
-  mnesia:create_schema([node()]).
-
-%%Вызывает create_table первой сущности.
-%%Если вернулась ошибка, то ничего. Иначе - создать все оставшиеся сущности
-create_tables()->
-  case user_repo:create_table() of
-    {atomic,_}->
-      io:format("Need more tables~n"),
-      seq:create_table(),
-      mnesia:wait_for_tables([seq],infinity),
-      seq:init(),
-      dialogue_repo:create_table(),
-      message_repo:create_table(),
-      ok;
-    {aborted,_Reason}->
-      io:format("No need in creation~n"),
-      ok
-  end.
-
-wait_tables()->
-  mnesia:wait_for_tables([user,seq,dialogue,message],infinity).
+%%Подключиться к БД, создать структуры, если их нет
+%%{ok, Connection}
+%%{error, Cause}
+start_db(Domain,Port,_User,Pass)->
+  redis_db:start_db(Domain,Port,_User,Pass).

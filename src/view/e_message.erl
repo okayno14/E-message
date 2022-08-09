@@ -34,6 +34,7 @@ init(#config{port = Port, acceptors_quantity = N})->
   end.
 
 loop(AcceptorList,ListenSocket,Con)->
+  io:format("TRACE e_mesage:loop/3. AcceptorList:~p~n",[AcceptorList]),
   receive
     {'EXIT',PID,_Reason}->
       if
@@ -48,7 +49,7 @@ loop(AcceptorList,ListenSocket,Con)->
     {stop, From}->
       io:format("TRACE e-message:loop/3. Received stop-message from ~p~n",[From]),
       terminate_children(AcceptorList,Con),
-      io:format("TRACE e-message:loop/3. Sending answer~n"),
+      io:format("TRACE e-message:loop/3. STOP. Sending answer~n"),
       From ! stopped
   end.
 
@@ -91,9 +92,10 @@ restart_acceptor(PID,ListenSocket,Con,AcceptorList)->
     fun(Elem, Res)->
       if
         Elem =/= PID ->
-          Res;
+          [Elem|Res];
         Elem =:= PID ->
           {ok,PID_N}=start_acceptor(ListenSocket,Con),
+          io:format("TRACE e_message:restart_acceptor. Acceptor#~w replaced by Acceptor#~w~n",[PID,PID_N]),
           [PID_N|Res]
       end
     end,
@@ -111,7 +113,7 @@ terminate_children([PID|Tail],Con)->
     ok ->
       terminate_children(Tail,Con)
     after
-      100->
+      5000->
         io:format("INFO e_message:terminate_children. Child ~p won't stop. Sending kill~n",[PID]),
         exit(PID,kill),
         terminate_children(Tail,Con)

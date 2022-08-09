@@ -29,15 +29,16 @@
 %%записать метаданные диалога
 write(Con,#dialogue{users = Nicks} = Dialogue)->
   {ok, DID} = eredis:q(Con,["INCR", "SeqDial"]),
+  DID_Num = binary_to_integer(DID),
   %%Специально зануляю коллекцию ников, так как эта информация будет храниться в множестве
-  Commited = Dialogue#dialogue{id=DID, users = undefined},
+  Commited = Dialogue#dialogue{id=DID_Num, users = []},
 
   eredis:q(Con,["MULTI"]),
-    {ok,_} = eredis:q(Con,["HSET",atom_to_list(dialogue),DID,?record_to_json(dialogue,Commited)]),
+    {ok,_} = eredis:q(Con,["HSET",atom_to_list(dialogue),DID_Num,?record_to_json(dialogue,Commited)]),
     write_users(Con, Commited, Nicks),
   {ok,_}=eredis:q(Con,["EXEC"]),
 
-  Dialogue#dialogue{id = binary_to_integer(DID)}.
+  Dialogue#dialogue{id = DID_Num}.
 
 %%прочитать пользователей ok
 %%прочитать сообщения ok.
@@ -79,7 +80,6 @@ read_by_user(Con,#user{nick = Nick})->
     end,
   lists:foldl(Fun,[],Sets).
 
-%%надо потестить
 fetch_messages(Con,#dialogue{messages = Messages})->
   Fun=
     fun(MID,Res)->
@@ -88,20 +88,18 @@ fetch_messages(Con,#dialogue{messages = Messages})->
     end,
   lists:foldl(Fun,[],Messages).
 
-%%переписать сообщения ok
-%%переписать пользователей ok
+%%переписать сообщения
+%%переписать пользователей
+%%переписать метаданные диалога
 update(Con,#dialogue{users = Nicks, messages = MID_LIST, id=DID}=Dialogue)->
-  %%Получить сообщения
-  %%M_List = fetch_messages(Con,Dialogue),
+  %%Получить сообщения. Нужно для rewrite_messages.
+  %%Действие проводится вне указанной функции, т.к. eredis не позволяет читать данные внутри транзакций
   {ok,M_ListJSON} = eredis:q(Con,["HMGET",atom_to_list(message)|MID_LIST]),
   io:format("TRACE redis:dialogue/2 M_ListJSON: ~p~n",[M_ListJSON]),
   eredis:q(Con,["MULTI"]),
-    %%пересоздать дерево сообщений
     rewrite_messages(Con,Dialogue,M_ListJSON),
-    %%Переписать множество пользователей
     eredis:q(Con,["DEL",name_gen:gen_dialogue_user_name(Dialogue)]),
     write_users(Con,Dialogue,Nicks),
-    %%Переписать метаданные диалога
     Commited = Dialogue#dialogue{id=DID, users = [],messages = []},
     {ok,_} = eredis:q(Con,["HSET",atom_to_list(dialogue),DID,?record_to_json(dialogue,Commited)]),
   {ok,T}=eredis:q(Con,["EXEC"]),
@@ -124,6 +122,8 @@ delete(Con,#dialogue{messages = Messages, id = DID}=Dialogue)->
   {ok,_}=eredis:q(Con,["EXEC"]),
   ok.
 
+%%PRIVATE-функции
+
 %%DID - бинарная строка, в которой записан численный ID
 write_users(Con,#dialogue{}=Dialogue, Nicks)->
   DU_Set = name_gen:gen_dialogue_user_name(Dialogue),
@@ -134,19 +134,17 @@ write_users(Con,#dialogue{}=Dialogue, Nicks)->
   Nicks).
 
 rewrite_messages(Con, #dialogue{}=Dialogue, M_ListJSON)->
-  io:format("TRACE redis:rewrite_messages/3 M_ListJSON: ~p~n",[M_ListJSON]),
   DM_Tree = name_gen:gen_dialogue_message_name(Dialogue),
-  io:format("TRACE redis:rewrite_messages/3 DM_Tree: ~p~n",[DM_Tree]),
   %%Удалить дерево сообщений
   DEL_TREE_RES=eredis:q(Con,["DEL",DM_Tree]),
-  io:format("TRACE redis:rewrite_messages/3 DEL_TREE_RES: ~p~n",[DEL_TREE_RES]),
+  io:format("TRACE redis:rewrite_messages/3 Message-tree ~p deleted.~n",[DM_Tree]),
   {ok,_}=DEL_TREE_RES,
+  %%Функция записи обновлённого дерева сообщений
   Fun =
     fun(MJSON)->
       M=?json_to_record(message,MJSON),
       #message{timeSending = TIME,id = MID}=M,
-      io:format("TRACE redis:rewrite_messages/3 M: ~p~n",[M]),
-      eredis:q(Con,["ZADD",DM_Tree,TIME,MID])
+      eredis:q(Con,["ZADD",DM_Tree,TIME,MID]),
+      io:format("TRACE redis:rewrite_messages/3 Message #~p added to tree.~n",[MID])
     end,
-  %%Создать новое дерево сообщений
   lists:map(Fun,M_ListJSON).

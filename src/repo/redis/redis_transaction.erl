@@ -8,8 +8,6 @@
 %%%-------------------------------------------------------------------
 -module(redis_transaction).
 -author("aleksandr_work").
-
-%% API
 -export([begin_transaction/1,
         abort_transaction/0]).
 
@@ -19,6 +17,5 @@ begin_transaction(Fun)->
     Res -> Res
   end.
 
-%%
 abort_transaction()->
   throw(transaction_aborted).

@@ -25,12 +25,14 @@
 %%delete - ok
 %%ошибка - {error, Reason}
 
+%%нельзя создавать новый объект с зарегистрированным идентификатором
 write(Con,#user{nick = Nick}=User)->
   case read(Con,Nick) of
     [] ->
       {ok,_}=eredis:q(Con,["HSET", atom_to_list(user), Nick, ?record_to_json(user,User)]),
       User;
-    _Obj -> {error, already_exists}
+    _Obj ->
+      {error, already_exists}
   end.
 
 read(Con,Nick)->

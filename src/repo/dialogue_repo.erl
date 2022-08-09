@@ -19,6 +19,8 @@
 %%read-операции - фильтры, поэтому они возвращают пустой или заполненный список
 %%update-операции - возвращают новый объект
 %%delete - ok
+%%ошибка - {error, Reason}
+
 write(Dialogue, Con)->
   redis_dialogue:write(Con,Dialogue).
 

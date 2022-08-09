@@ -9,6 +9,11 @@
 -module(redis_user).
 -include("entity.hrl").
 -include("jsonerl/jsonerl.hrl").
+-export([write/2,
+        read/2,
+        read/3,
+        update/2,
+        delete/2]).
 
 %% на вход всегда принимаются:
 %%     дескриптор соединения, сущность
@@ -18,12 +23,6 @@
 %%read-операции - фильтры, поэтому они возвращают пустой или заполненный список
 %%update-операции - возвращают новый объект
 %%delete - ok
-
--export([write/2,
-        read/2,
-        read/3,
-        update/2,
-        delete/2]).
 
 write(Con,#user{nick = Nick}=User)->
   case read(Con,Nick) of

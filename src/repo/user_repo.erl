@@ -8,16 +8,16 @@
 %%%-------------------------------------------------------------------
 -module(user_repo).
 -include("entity.hrl").
-
-%% API
--export([create_table/0,
-        write/2,
+-export([write/2,
         read/2,
         read/3,
         update/2,
         delete/2]).
 
-create_table()-> ok.
+%%create-операции должны возвращать 1 персистентный объект
+%%read-операции - фильтры, поэтому они возвращают пустой или заполненный список
+%%update-операции - возвращают новый объект
+%%delete - ok
 
 write(User, Con)->
   redis_user:write(Con,User).

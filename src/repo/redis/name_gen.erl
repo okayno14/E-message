@@ -8,12 +8,12 @@
 %%%-------------------------------------------------------------------
 -module(name_gen).
 -include("entity.hrl").
-
-%% API
 -export([gen_dialogue_user_name/1,
         gen_dialogue_message_name/1,
         gen_dialogue_user_search_pattern/0,
         parse_DID_from_dialogue_message/1]).
+
+%%Вспомогательный модуль для работы с ключами Redis
 
 %%dialogue:<DID>:user
 gen_dialogue_user_name(#dialogue{id = DID})->

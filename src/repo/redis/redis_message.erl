@@ -9,12 +9,19 @@
 -module(redis_message).
 -include("entity.hrl").
 -include("jsonerl/jsonerl.hrl").
-
-%% API
 -export([write/2,
         read/2,
         update/2,
         delete/2]).
+
+%% на вход всегда принимаются:
+%%     дескриптор соединения, сущность
+%%     дескриптор соединения, ключи поиска
+
+%%create-операции должны возвращать 1 персистентный объект
+%%read-операции - фильтры, поэтому они возвращают пустой или заполненный список
+%%update-операции - возвращают новый объект
+%%delete - ok
 
 write(Con,#message{}=Message)->
   {ok,MID}=eredis:q(Con,["INCR","SeqMsg"]),

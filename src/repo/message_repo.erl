@@ -8,22 +8,15 @@
 %%%-------------------------------------------------------------------
 -module(message_repo).
 -include("entity.hrl").
-
-%% API
--export([create_table/0,
-        read/2,
+-export([read/2,
         write/2,
         update/2,
         delete/2]).
 
-create_table()->
-  mnesia:create_table(message,
-    [
-      {record_name, message},
-      {type, set},
-      {attributes, record_info(fields, message)},
-      {disc_copies, [node()]}
-    ]).
+%%create-операции должны возвращать 1 персистентный объект
+%%read-операции - фильтры, поэтому они возвращают пустой или заполненный список
+%%update-операции - возвращают новый объект
+%%delete - ok
 
 write(Message, Con)->
   redis_message:write(Con,Message).

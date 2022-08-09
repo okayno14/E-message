@@ -10,7 +10,6 @@
 -export([begin_transaction/1,
         abort_transaction/0]).
 
-
 %%Res || {error, Cause}
 
 %%Fun/0 функция с телом транзакции.

@@ -8,26 +8,17 @@
 %%%-------------------------------------------------------------------
 -module(dialogue_repo).
 -include("entity.hrl").
-
-%% API
--export([create_table/0,
-        write/2,
+-export([write/2,
         read/2,
         read_by_User/2,
         fetch_messages/2,
         update/2,
         delete/2]).
 
-create_table()->
-  mnesia:create_table(dialogue,
-    [
-      {record_name, dialogue},
-      {type, set},
-      {attributes, record_info(fields, dialogue)},
-      {index,[name,users]},
-      {disc_copies, [node()]}
-    ]).
-
+%%create-операции должны возвращать 1 персистентный объект
+%%read-операции - фильтры, поэтому они возвращают пустой или заполненный список
+%%update-операции - возвращают новый объект
+%%delete - ok
 write(Dialogue, Con)->
   redis_dialogue:write(Con,Dialogue).
 

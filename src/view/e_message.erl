@@ -27,7 +27,12 @@ init(#config{port = Port, acceptors_quantity = N})->
     {ok,ListenSocket}->
       Con = start_repo(),
       AcceptorList = start_acceptors(N,ListenSocket,Con,[]),
-      loop(AcceptorList,ListenSocket,Con);
+      case AcceptorList of
+        []->
+          exit(acceptors_start_fail);
+        AcceptorList->
+          loop(AcceptorList,ListenSocket,Con)
+      end;
     {error,Reason}->
       io:format("FATAL e-message:init/1 Can't listen port.~n~p~n",[Reason]),
       exit(Reason)
@@ -61,7 +66,8 @@ parse_conf(ConfPath)->
 start_observer(Conf)->
   Me = self(),
   io:format("INFO e-message:start/1. E-message started. Root_pid = ~p~n",[Me]),
-  register(e_message,spawn_link(?MODULE,init,[Conf])).
+  register(e_message,spawn_link(?MODULE,init,[Conf])),
+  ok.
 
 start_repo()->
   case (catch db:start_db()) of

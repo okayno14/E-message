@@ -7,9 +7,9 @@
 %%% Created : 09. авг. 2022 16:21
 %%%-------------------------------------------------------------------
 -module(e_message).
--include("jsonerl/jsonerl.hrl").
+-include("../../_build/default/lib/jsonerl/include/jsonerl.hrl").
 
--include("config.hrl").
+-include("../../include/config.hrl").
 
 -export([start/0,
         start/1,

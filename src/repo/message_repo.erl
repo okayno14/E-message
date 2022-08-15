@@ -7,7 +7,7 @@
 %%% Created : 28. июль 2022 18:21
 %%%-------------------------------------------------------------------
 -module(message_repo).
--include("entity.hrl").
+-include("../../include/entity.hrl").
 -export([read/2,
         write/2,
         update/2,

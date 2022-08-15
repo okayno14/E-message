@@ -7,8 +7,8 @@
 %%% Created : 07. авг. 2022 10:21
 %%%-------------------------------------------------------------------
 -module(redis_dialogue).
--include("../../include/entity.hrl").
--include("../../_build/default/lib/jsonerl/include/jsonerl.hrl").
+-include("../../../include/entity.hrl").
+-include("../../../_build/default/lib/jsonerl/include/jsonerl.hrl").
 -export([write/2,
         read/2,
         read_by_user/2,

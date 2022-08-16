@@ -26,9 +26,19 @@ init(#config{port = Port, acceptors_quantity = N})->
   process_flag(trap_exit, true),
   case gen_tcp:listen(Port,[{active, false}]) of
     {ok,ListenSocket}->
-      Con = start_repo(),
-      AcceptorList = start_acceptors(N,ListenSocket,Con,[]),
-      loop(AcceptorList,ListenSocket,Con);
+      Repo = start_repo(),
+      case Repo of
+        {ok,Con}->
+          io:format("INFO e-message:init/1 Repo started ~p~n",[Con]),
+          link(Con),
+          Con,
+          AcceptorList = start_acceptors(N,ListenSocket,Con,[]),
+          loop(AcceptorList,ListenSocket,Con);
+        _ ->
+          io:format("FATAL e-message:init/1 Repo can't start~n"),
+          terminate_socket(ListenSocket),
+          exit(repo_start_fail)
+      end;
     {error,Reason}->
       io:format("FATAL e-message:init/1 Can't listen port.~n~p~n",[Reason]),
       exit(Reason)
@@ -41,7 +51,13 @@ loop(AcceptorList,ListenSocket,Con)->
       if
         Con =:= PID ->
           io:format("WARNING e-message:loop/3. Proccess-repo ~p falls. Reason:~p~n",[PID,_Reason]),
-          loop(AcceptorList,ListenSocket,start_repo());
+          case start_repo() of
+            {ok,Con1}->
+              loop(AcceptorList,ListenSocket,Con1);
+            _ ->
+              terminate_children(AcceptorList),
+              terminate_socket(ListenSocket)
+          end;
         Con =/= PID ->
           io:format("WARNING e-message:loop/3. Proccess-acceptor ~p falls. Reason:~p~n",[PID,_Reason]),
           AcceptorList_N=restart_acceptor(PID,ListenSocket,Con,AcceptorList),
@@ -49,7 +65,7 @@ loop(AcceptorList,ListenSocket,Con)->
       end;
     {stop, From}->
       io:format("TRACE e-message:loop/3. Received stop-message from ~p~n",[From]),
-      terminate_children(AcceptorList,Con),
+      free_resources(AcceptorList,ListenSocket,Con),
       io:format("TRACE e-message:loop/3. STOP. Sending answer~n"),
       From ! ok
   end.
@@ -66,14 +82,7 @@ start_observer(Conf)->
   register(e_message,spawn_link(?MODULE,init,[Conf])).
 
 start_repo()->
-  case (catch db:start_db()) of
-    {ok,Con}->
-      link(Con),
-      Con;
-    _ ->
-      io:format("FATAL e-message:start_children/1 Repo can't start~n"),
-      exit(repo_start_fail)
-  end.
+  catch db:start_db().
 
 start_acceptors(0,_,_,Res)->
   Res;
@@ -104,19 +113,31 @@ restart_acceptor(PID,ListenSocket,Con,AcceptorList)->
   lists:foldl(Fun,[],AcceptorList).
 
 %%пока что сервер с БД просто убивается
-terminate_children([],Con)->
-  io:format("INFO e_message:terminate_children. Sending kill to Repo~n"),
-  exit(Con,kill);
+terminate_children([])->
+  ok;
 %%Число взял с потолка
-terminate_children([PID|Tail],Con)->
+terminate_children([PID|Tail])->
   io:format("INFO e_message:terminate_children. Trying stop child ~p~n",[PID]),
   PID ! {stop,self()},
   receive
     ok ->
-      terminate_children(Tail,Con)
+      terminate_children(Tail)
     after
       5000->
         io:format("INFO e_message:terminate_children. Child ~p won't stop. Sending kill~n",[PID]),
         exit(PID,kill),
-        terminate_children(Tail,Con)
+        terminate_children(Tail)
   end.
+
+terminate_repo(Con)->
+  io:format("INFO e_message:terminate_children. Sending kill to Repo~n"),
+  exit(Con,kill).
+
+terminate_socket(ListenSocket)->
+  io:format("INFO e_message:terminate_socket. Socket ~p closed~n",[ListenSocket]),
+  gen_tcp:close(ListenSocket).
+
+free_resources(AcceptorList,ListenSocket,Con)->
+  terminate_children(AcceptorList),
+  terminate_repo(Con),
+  terminate_socket(ListenSocket).

@@ -9,6 +9,7 @@
 -module(e_message).
 -include("../../_build/default/lib/jsonerl/include/jsonerl.hrl").
 
+-include("../../include/entity.hrl").
 -include("../../include/config.hrl").
 
 -export([start/0,
@@ -56,6 +57,7 @@ loop(AcceptorList,ListenSocket,Con)->
 %%вспомогательные функции
 parse_conf(ConfPath)->
   {ok,Text_Bin}=file:read_file(ConfPath),
+  io:format("TRACE e_message:parse_conf/1 Text:~p~n",[Text_Bin]),
   ?json_to_record(config,Text_Bin).
 
 start_observer(Conf)->

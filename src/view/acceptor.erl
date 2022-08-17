@@ -7,10 +7,10 @@
 %%% Created : 25. июль 2022 11:23
 %%%-------------------------------------------------------------------
 -module(acceptor).
--include("jsonerl/jsonerl.hrl").
--include("request.hrl").
--include("entity.hrl").
--include("config.hrl").
+-include("../../_build/default/lib/jsonerl/include/jsonerl.hrl").
+-include("../../include/request.hrl").
+-include("../../include/entity.hrl").
+-include("../../include/config.hrl").
 %% API
 -export([start/2]).
 

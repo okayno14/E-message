@@ -7,8 +7,8 @@
 %%% Created : 28. июль 2022 15:47
 %%%-------------------------------------------------------------------
 -author("aleksandr_work").
--record(user,{nick="",
-        pass="123qwerty"}).
+-record(user,{nick = <<"anon">>,
+              pass = <<"123qwerty">>}).
 -record(dialogue,{id=-1,
                   name="",
                   users=[],

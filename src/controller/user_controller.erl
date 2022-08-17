@@ -7,7 +7,7 @@
 %%% Created : 29. июль 2022 13:10
 %%%-------------------------------------------------------------------
 -module(user_controller).
--include("entity.hrl").
+-include("../../include/entity.hrl").
 
 %% API
 -export([create_user/2,

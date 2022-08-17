@@ -7,7 +7,7 @@
 %%% Created : 29. июль 2022 0:13
 %%%-------------------------------------------------------------------
 -module(dialogue_service).
--include("entity.hrl").
+-include("../../include/entity.hrl").
 
 %% API
 -export([create_dialogue/2,

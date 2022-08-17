@@ -7,7 +7,7 @@
 %%% Created : 07. авг. 2022 20:53
 %%%-------------------------------------------------------------------
 -module(name_gen).
--include("entity.hrl").
+-include("../../../include/entity.hrl").
 -export([gen_dialogue_user_name/1,
         gen_dialogue_message_name/1,
         gen_dialogue_user_search_pattern/0,

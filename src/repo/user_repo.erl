@@ -7,7 +7,7 @@
 %%% Created : 28. июль 2022 18:21
 %%%-------------------------------------------------------------------
 -module(user_repo).
--include("entity.hrl").
+-include("../../include/entity.hrl").
 -export([write/2,
         read/2,
         read/3,

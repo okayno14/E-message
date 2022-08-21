@@ -11,6 +11,7 @@
 ## Запуск
 
 Сервер запускается по вызову 2-х функций:
+
 1. e_message:start(Path), где Path - путь до файла config.json;
 2. e_message:start(), где путь по умолчанию - "priv/etc/config.json".
 

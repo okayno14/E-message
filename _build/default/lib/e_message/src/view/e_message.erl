@@ -79,7 +79,8 @@ parse_conf(ConfPath)->
 start_observer(Conf)->
   Me = self(),
   io:format("INFO e-message:start/1. E-message started. Root_pid = ~p~n",[Me]),
-  register(e_message,spawn_link(?MODULE,init,[Conf])).
+  register(e_message,spawn_link(?MODULE,init,[Conf])),
+  ok.
 
 start_repo()->
   catch db:start_db().

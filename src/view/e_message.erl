@@ -7,10 +7,10 @@
 %%% Created : 09. авг. 2022 16:21
 %%%-------------------------------------------------------------------
 -module(e_message).
--include("../../_build/default/lib/jsonerl/include/jsonerl.hrl").
+-include_lib("jsonerl/include/jsonerl.hrl").
 
--include("../../include/entity.hrl").
--include("../../include/config.hrl").
+-include_lib("e_message/include/config.hrl").
+-include_lib("e_message/include/entity.hrl").
 
 -export([start/0,
         start/1,

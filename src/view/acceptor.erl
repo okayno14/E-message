@@ -59,25 +59,25 @@ serve_request(Socket, Request,Con)->
   [Fun,ArgsJSON]=parseRequest(Request),
   case Fun of
     create_user->
-      create_user_handler(ArgsJSON,Socket, Con);
+      create_user_handler(ArgsJSON,Socket,Con);
     create_dialogue->
-      create_dialogue_handler(ArgsJSON,Socket, Con);
+      create_dialogue_handler(ArgsJSON,Socket,Con);
     get_dialogues->
-      get_dialogues_handler(ArgsJSON,Socket, Con);
+      get_dialogues_handler(ArgsJSON,Socket,Con);
     quit_dialogue->
-      quit_dialogue_handler(ArgsJSON,Socket, Con);
+      quit_dialogue_handler(ArgsJSON,Socket,Con);
     send_message->
-      send_message_handler(ArgsJSON,Socket, Con);
+      send_message_handler(ArgsJSON,Socket,Con);
     get_message->
-      get_message_handler(ArgsJSON,Socket, Con);
+      get_message_handler(ArgsJSON,Socket,Con);
     get_messages->
-      get_messages_handler(ArgsJSON,Socket, Con);
+      get_messages_handler(ArgsJSON,Socket,Con);
     read_message->
-      read_message_handler(ArgsJSON,Socket, Con);
+      read_message_handler(ArgsJSON,Socket,Con);
     change_text->
-      change_text_handler(ArgsJSON,Socket, Con);
+      change_text_handler(ArgsJSON,Socket,Con);
     delete_message->
-      delete_message_handler(ArgsJSON,Socket, Con)
+      delete_message_handler(ArgsJSON,Socket,Con)
   end.
 
 parseRequest(Request)->

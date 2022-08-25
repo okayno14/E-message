@@ -7,7 +7,6 @@
 %%% Created : 25. июль 2022 11:23
 %%%-------------------------------------------------------------------
 -module(acceptor).
-
 -include_lib("jsonerl/include/jsonerl.hrl").
 
 -include_lib("e_message/include/entity.hrl").

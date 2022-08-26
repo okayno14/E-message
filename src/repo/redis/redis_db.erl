@@ -9,7 +9,7 @@
 -module(redis_db).
 -author("aleksandr_work").
 -export([start_db/0,
-        start_db/4]).
+        start_db/5]).
 
 %%Модуль для управления соединением с бд
 
@@ -19,5 +19,5 @@
 start_db()->
   eredis:start_link().
 
-start_db(Domain,Port,_User,Pass)->
-  eredis:start_link(Domain, Port, 0, Pass, 0).
+start_db(Domain,Port,Database,_User,Pass)->
+  eredis:start_link(Domain, Port, Database, Pass, 0).

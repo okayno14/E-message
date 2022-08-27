@@ -102,14 +102,16 @@ add_message(D,M, Con)->
   T = redis_transaction:begin_transaction(Fun),
   service:extract_single_value(T).
 
-read_message(U,M,D,Con)->
-  case dialogue:is_sender_or_receiver(U,M,D) of
-    true->
+read_message(#user{nick=Nick}=U,#message{from=From}=M,D,Con)->
+  case dialogue:containsUser(D,U) of
+    true when Nick =/= From->
       case message:read(M) of
         {error,_R}->{error,_R};
         M_Persisted->
           message_repo:update(M_Persisted, Con)
       end;
+    true when Nick =:= From->
+      {error,not_authorised};
     false->
       {error,not_authorised}
   end.

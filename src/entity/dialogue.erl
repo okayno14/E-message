@@ -7,7 +7,7 @@
 %%% Created : 31. июль 2022 11:44
 %%%-------------------------------------------------------------------
 -module(dialogue).
--include("../../include/entity.hrl").
+-include_lib("e_message/include/entity.hrl").
 
 %% API
 -export([containsUser/2,add_message/2]).

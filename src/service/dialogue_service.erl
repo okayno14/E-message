@@ -17,7 +17,7 @@
         get_message/4,
         get_messages/2,
         add_message/3,
-        read_message/2,
+        read_message/4,
         change_text/3,
         delete_message/4,
         delete_dialogue/2]).
@@ -51,21 +51,15 @@ get_message(U,MID,DID,Con)->
     message_repo:read(MID, Con)
   end,
   M = service:extract_single_value(redis_transaction:begin_transaction(F)),
-  case M of 
-    M when M#message.from =:= U#user.nick ->
-      M;
-    _ ->
-      D = service:extract_single_value(transaction:begin_transaction(fun()->
+  D = service:extract_single_value(transaction:begin_transaction(fun()->
                                                                       dialogue_repo:read(DID) 
                                                                     end)),
-      case dialogue:containsUser(D,U) of
-        true->
-          M;
-        false->
-          {error, not_authorised}
-      end
+  case dialogue:is_sender_or_receiver(U,M,D) of
+    true->
+      M;
+    false->
+      {error,not_authorised}
   end.
-  
 
 get_messages(D, Con)->
   F=
@@ -108,11 +102,16 @@ add_message(D,M, Con)->
   T = redis_transaction:begin_transaction(Fun),
   service:extract_single_value(T).
 
-read_message(M, Con)->
-  case message:read(M) of
-    {error,_R}->{error,_R};
-    M_Persisted->
-      message_repo:update(M_Persisted, Con)
+read_message(U,M,D,Con)->
+  case dialogue:is_sender_or_receiver(U,M,D) of
+    true->
+      case message:read(M) of
+        {error,_R}->{error,_R};
+        M_Persisted->
+          message_repo:update(M_Persisted, Con)
+      end;
+    false->
+      {error,not_authorised}
   end.
 
 change_text(M,Text, Con)->

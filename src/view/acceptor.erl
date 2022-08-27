@@ -248,18 +248,23 @@ get_messages_handler(ArgsJSON, Socket, Con)->
 
 read_message_handler(ArgsJSON,Socket, Con)->
   Args = ?json_to_record(read_message,ArgsJSON),
-  #read_message{nick = Nick,pass = Pass, id = MID}=Args,
+  #read_message{nick = Nick,pass = Pass, messageID=MID, dialogueID=DID}=Args,
   case is_authorised(Nick,Pass,Socket, Con) of
     true->
       case dialogue_controller:get_message(MID, Con) of
         {error,_R}->
           handle_error(_R,Socket);
         M->
-          Res = dialogue_controller:read_message(M, Con),
-          handle_request_result(
+          case  dialogue_controller:get_dialogue(DID,Con) of
+            {error,_RR}->
+              handle_error(_RR,Socket);
+            D->
+              Res = dialogue_controller:read_message(#user{nick=Nick},M,D),
+              handle_request_result(
             Res,
             fun(X)-> ?record_to_json(message,X) end,
             Socket)
+          end
       end;
     false->ok
   end.

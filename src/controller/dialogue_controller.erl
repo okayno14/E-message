@@ -18,7 +18,7 @@
         get_messages/2,
         quit_dialogue/3,
         add_message/3,
-        read_message/2,
+        read_message/4,
         change_text/3,
         delete_message/4,
         delete_dialogue/2]).
@@ -44,8 +44,8 @@ get_messages(D, Con)->
 add_message(D,M, Con)->
   dialogue_service:add_message(D,M, Con).
 
-read_message(M, Con)->
-  dialogue_service:read_message(M, Con).
+read_message(U,M,D,Con)->
+  dialogue_service:read_message(U,M,D,Con).
 
 change_text(M,Text, Con)->
   dialogue_service:change_text(M,Text, Con).

@@ -14,7 +14,7 @@
 -export([create_dialogue/2,
         get_dialogue/2,
         get_dialogues/2,
-        get_message/2,
+        get_message/4,
         get_messages/2,
         quit_dialogue/3,
         add_message/3,
@@ -35,8 +35,8 @@ get_dialogues(U, Con)->
 quit_dialogue(D,U, Con)->
   dialogue_service:quit_dialogue(D,U, Con).
 
-get_message(MID, Con)->
-  dialogue_service:get_message(MID, Con).
+get_message(U,MID,DID,Con)->
+  dialogue_service:get_message(U,MID,DID,Con).
 
 get_messages(D, Con)->
   dialogue_service:get_messages(D, Con).

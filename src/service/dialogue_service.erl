@@ -14,7 +14,7 @@
         get_dialogue/2,
         get_dialogues/2,
         quit_dialogue/3,
-        get_message/2,
+        get_message/4,
         get_messages/2,
         add_message/3,
         read_message/2,
@@ -45,12 +45,27 @@ get_dialogues(U, Con)->
     end,
   service:extract_multiple_values(redis_transaction:begin_transaction(F)).
 
-get_message(MID, Con)->
+get_message(U,MID,DID,Con)->
   F=
   fun()->
     message_repo:read(MID, Con)
   end,
-  service:extract_single_value(redis_transaction:begin_transaction(F)).
+  M = service:extract_single_value(redis_transaction:begin_transaction(F)),
+  case M of 
+    M when M#message.from =:= U#user.nick ->
+      M;
+    _ ->
+      D = service:extract_single_value(transaction:begin_transaction(fun()->
+                                                                      dialogue_repo:read(DID) 
+                                                                    end)),
+      case dialogue:containsUser(D,U) of
+        true->
+          M;
+        false->
+          {error, not_authorised}
+      end
+  end.
+  
 
 get_messages(D, Con)->
   F=

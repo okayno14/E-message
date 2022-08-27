@@ -214,11 +214,11 @@ send_message_handler(ArgsJSON, Socket, Con)->
 
 get_message_handler(ArgsJSON, Socket, Con)->
   Args = ?json_to_record(get_message,ArgsJSON),
-  #get_message{nick = Nick,pass = Pass, id = MID}=Args,
+  #get_message{nick = Nick,pass = Pass, messageID = MID, dialogueID = DID}=Args,
   case is_authorised(Nick,Pass,Socket, Con) of
     true->
       handle_request_result(
-        dialogue_controller:get_message(MID, Con),
+        dialogue_controller:get_message(#user{nick=Nick},MID,DID,Con),
         fun(X)-> ?record_to_json(message,X) end,
         Socket);
     false->

@@ -26,3 +26,4 @@
 -record(get_artifact,{id}).
 
 -record(error,{type,msg}).
+-record(array,{arr=[]}).

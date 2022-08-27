@@ -88,8 +88,9 @@ parseRequest(Request)->
 
 %%обобщённый обработчик исключений
 handle_error(_Reason, Socket)->
-  ErrorMsg = #error{type = error, msg = _Reason},
-  gen_tcp:send(Socket,?record_to_json(error,ErrorMsg)).
+  Error = #error{type = error, msg = _Reason},
+  ErrorMsg = ["error\n\n"|?record_to_json(error,Error)],
+  gen_tcp:send(Socket,ErrorMsg).
 
 %%обобщённый обработчик результатов запросов
 %%Res - результат вызова контроллера, ради которого и совершался искомый запрос к серверу
@@ -97,17 +98,20 @@ handle_error(_Reason, Socket)->
 %%Socket - сокет, по которому осуществляется связь с клиентом
 handle_request_result(Res,HappyParse,Socket)->
   case Res of
-    {error,_R}->handle_error(_R,Socket);
-    OK->gen_tcp:send(Socket,HappyParse(OK))
+    {error,_R}->
+      handle_error(_R,Socket);
+    OK->
+      gen_tcp:send(Socket,["ok\n\n"|HappyParse(OK)])
   end.
 
 %%Ищет пользователя в базе для проведения авторизации.
 %%В случае успеха возвращает true,
 %%иначе - посылает клиенту ответ и возвращает false
 is_authorised(Nick,Pass,Socket,Con)->
-  case user_controller:get_user(Nick,Pass,Con) of
+  U = user_controller:get_user(Nick,Pass,Con),
+  io:format("TRACE acceptor:is_authorised/4 U:~p~n",[U]),
+  case U of
     {error,_Reason}->
-      handle_error(_Reason,Socket),
       false;
     []->
       handle_error(not_authorized,Socket),
@@ -141,7 +145,7 @@ create_dialogue_handler(ArgsJSON,Socket, Con)->
   end.
 
 get_dialogues_handler(ArgsJSON,Socket, Con)->
-  Args= ?json_to_record(get_dialogues,ArgsJSON),
+  Args=?json_to_record(get_dialogues,ArgsJSON),
   #get_dialogues{nick = Nick,pass = Pass}=Args,
   case is_authorised(Nick,Pass,Socket, Con) of
     true->

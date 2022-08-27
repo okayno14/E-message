@@ -4,5 +4,5 @@
   0},
  {<<"jsonerl">>,
   {git,"https://github.com/okayno14/jsonerl.git",
-       {ref,"b407439c3d2303dc614b68ea443e1dacb06b904d"}},
+       {ref,"789827667bfdd432dbdd01c3a002ca66a5a4a469"}},
   0}].

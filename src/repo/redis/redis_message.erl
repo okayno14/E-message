@@ -31,7 +31,8 @@ write(Con,#message{}=Message)->
 
 read(Con,MID) when MID =/= -1 ->
   {ok,JSON} = eredis:q(Con,["HGET",atom_to_list(message),MID]),
-  [?json_to_record(message,JSON)].
+  M = ?json_to_record(message,JSON),
+  [parse_state(M)].
 
 update(Con,#message{id = MID}=Message)->
   {ok,_}=eredis:q(Con,["HSET",atom_to_list(message),MID,?record_to_json(message,Message)]),
@@ -40,3 +41,7 @@ update(Con,#message{id = MID}=Message)->
 delete(Con,#message{id=MID})->
   {ok,_} = eredis:q(Con,["HDEL",atom_to_list(message),MID]),
   ok.
+
+
+parse_state(M)->
+  M#message{state=binary_to_atom(M#message.state)}.

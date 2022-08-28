@@ -129,11 +129,16 @@ create_user_handler(ArgsJSON, Socket, Con)->
   Args = ?json_to_record(create_user,ArgsJSON),
   #create_user{nick = Nick,pass = Pass} = Args,
   User = #user{nick = Nick,pass = Pass},
-  Res=user_controller:create_user(User, Con),
-  handle_request_result(
-    Res,
-    fun(X)-> ?record_to_json(user,X) end,
-    Socket).
+  case common_validation_service:is_object_valid(User,user_validation_service:all()) of
+    true->
+      Res=user_controller:create_user(User, Con),
+      handle_request_result(
+        Res,
+        fun(X)-> ?record_to_json(user,X) end,
+        Socket);
+    false->
+      handle_error(invalid_data,Socket)
+  end.
 
 create_dialogue_handler(ArgsJSON,Socket, Con)->
   Args = ?json_to_record(create_dialogue,ArgsJSON),

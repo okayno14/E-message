@@ -8,7 +8,8 @@
 
 create_user(User)->
 	Req = "create_user\n\n"++?record_to_json(user,User),
-	?json_to_record(user,send_req(Req)).
+	Ans = send_req(Req),
+	parse_ans(Ans,fun(X)-> ?json_to_record(user,X) end).
 
 create_dialogue(U,D)->
 	Data = #create_dialogue{nick=U#user.nick,

@@ -12,7 +12,7 @@
 is_object_valid(Obj,All)->
 	is_object_valid(Obj,All,2,tuple_size(Obj),true).
 	
-is_object_valid(Obj,All,Max,Max,Res)->
+is_object_valid(_,_,Field,Max,Res) when Field =:= Max+1->
 	Res;
 is_object_valid(Obj,[Foo|Tail],Field,Max,Res)->
 	Res1=Res and Foo(element(Field,Obj)),

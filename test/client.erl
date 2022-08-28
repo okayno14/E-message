@@ -11,6 +11,11 @@ create_user(User)->
 	Ans = send_req(Req),
 	parse_ans(Ans,fun(X)-> ?json_to_record(user,X) end).
 
+delete_user(User)->
+	Req = "delete_user\n\n"++?record_to_json(user,User),
+	Ans = send_req(Req),
+	parse_ans(Ans,fun(_)-> undefined end).
+
 create_dialogue(U,D)->
 	Data = #create_dialogue{nick=U#user.nick,
 							pass=U#user.pass,

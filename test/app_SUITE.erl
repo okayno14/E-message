@@ -26,7 +26,12 @@ groups()->
 		{users,[],[create_user1,
 					create_user2,
 					create_user3,
-					create_user4]},
+					create_user4,
+					
+					delete_user1,
+					delete_user2,
+					delete_user3,
+					delete_user4]},
 		{dialogues,[],[get_dialogues1,
 						get_dialogues2,
 						get_dialogues3,
@@ -56,6 +61,29 @@ create_user3(_)->
 %invalid pass
 create_user4(_)->
 	Res=client:create_user(gen_user_invalid_pass()),
+	true=is_record(Res,error).
+
+%normal case
+delete_user1(_)->
+	Nick = ct:get_config(user4_nick),
+	Pass = ct:get_config(user4_pass),
+	User = #user{nick=Nick,pass=Pass},
+	undefined = client:delete_user(User).
+
+%repeat delete
+delete_user2(_C)->
+	delete_user1(_C).
+
+%invalid Nick
+delete_user3(_)->
+	User = gen_user_invalid_nick(),
+	Res = client:delete_user(User),
+	true=is_record(Res,error).
+
+%invalid Pass
+delete_user4(_)->
+	User = gen_user_invalid_pass(),
+	Res = client:delete_user(User),
 	true=is_record(Res,error).
 
 %user exists

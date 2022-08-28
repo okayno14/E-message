@@ -336,7 +336,7 @@ delete_user_handler(ArgsJSON,Socket,Con)->
     true->
       handle_request_result(
         ok,
-        fun(X)-> "" end,
+        fun(_)-> "" end,
         Socket);
     false->
       handle_error(invalid_data,Socket)

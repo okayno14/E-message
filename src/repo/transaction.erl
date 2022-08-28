@@ -21,7 +21,8 @@ begin_transaction(Fun)->
   try
     redis_transaction:begin_transaction(Fun)
   catch
-    throw:transaction_aborted -> {error, transaction_aborted}
+    throw:transaction_aborted -> 
+      {error, transaction_aborted}
   end.
 
 %%функция внутри должна послать сообщение базе об отмене транзакции и

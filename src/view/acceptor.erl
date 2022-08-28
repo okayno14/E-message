@@ -147,11 +147,16 @@ create_dialogue_handler(ArgsJSON,Socket, Con)->
   #create_dialogue{nick = Nick, pass=Pass, name = Name, userNicks = UserNicks}=Args,
   case is_authorised(Nick,Pass,Socket, Con) of
     true->
-      _D=#dialogue{name=Name,users = UserNicks},
-      Res=dialogue_controller:create_dialogue(_D, Con),
-      handle_request_result(Res,
-        fun(X)->?record_to_json(dialogue,X) end,
-        Socket);
+      D=#dialogue{name=Name,users = UserNicks},
+      case common_validation_service:is_object_valid(D,dialogue_validation_service:all()) of
+        true->
+          Res=dialogue_controller:create_dialogue(D, Con),
+          handle_request_result(Res,
+                                  fun(X)->?record_to_json(dialogue,X) end,
+                                  Socket);
+        false->
+          handle_error(invalid_data,Socket)
+      end;
     false->
       handle_error(not_authorised,Socket)
   end.
@@ -334,9 +339,10 @@ delete_user_handler(ArgsJSON,Socket,Con)->
   User = #user{nick = Nick,pass = Pass},
   case common_validation_service:is_object_valid(User,user_validation_service:all()) of
     true->
+      Res = user_controller:delete_user(User, Con),
       handle_request_result(
-        ok,
-        fun(_)-> "" end,
+        Res,
+        fun(X)-> atom_to_list(X) end,
         Socket);
     false->
       handle_error(invalid_data,Socket)

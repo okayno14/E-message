@@ -43,5 +43,5 @@ read(Nick,Pass, Con)->
 update(UserNew, Con) ->
   redis_user:update(Con,UserNew).
 
-delete(#user{nick = Nick}, Con) ->
-  redis_user:delete(Con,Nick).
+delete(U, Con) ->
+  redis_user:delete(Con,U).

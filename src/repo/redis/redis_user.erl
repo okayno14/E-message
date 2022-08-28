@@ -58,4 +58,5 @@ update(Con,#user{nick = Nick}=User)->
   User.
 
 delete(Con,#user{nick = Nick})->
-  {ok,_} = eredis:q(Con,["HDEL",atom_to_list(user), Nick]).
+  {ok,_} = eredis:q(Con,["HDEL",atom_to_list(user), Nick]),
+  ok.

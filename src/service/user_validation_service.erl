@@ -8,7 +8,7 @@ all()->
 		fun(X)->is_password_valid(X) end	
 	].
 
-is_password_valid(Pass)->
+is_password_valid(Pass) when is_binary(Pass)->
 	P = binary_to_list(Pass),
 	case re:run(P,"^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@!\\#$%^&+=])(?=[^\r\n\t\f\v ]+$).{8,}$") of
 		nomatch-> 
@@ -20,9 +20,11 @@ is_password_valid(Pass)->
 				element(2,H) =/= length(P)->
 					false
 			end
-	end.
+	end;
+is_password_valid(_)->
+	false.
 
-is_nick_valid(Nick)->
+is_nick_valid(Nick) when is_binary(Nick)->
 	P = binary_to_list(Nick),
 	case re:run(P,"[a-zA-z0-9]+") of
 		nomatch-> 
@@ -34,4 +36,6 @@ is_nick_valid(Nick)->
 				element(2,H) =/= length(P)->
 					false
 			end
-	end.
+	end;
+is_nick_valid(_)->
+	false.

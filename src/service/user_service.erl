@@ -12,7 +12,8 @@
 
 %% API
 -export([create_user/2,
-        get_user/3]).
+          get_user/3,
+          delete_user/2]).
 
 create_user(User, Con)->
   F=
@@ -32,6 +33,7 @@ get_user(Nick,Pass, Con)->
 delete_user(User, Con)->
     F=
     fun()->
-      user_repo:delete(User, Con)
+      user_repo:delete(User, Con),
+      ok
     end,
   redis_transaction:begin_transaction(F).

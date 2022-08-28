@@ -22,12 +22,32 @@
         delete_message/4,
         delete_dialogue/2]).
 
-create_dialogue(D, Con)->
-  F=
-    fun()->
-      dialogue_repo:write(D, Con)
-    end,
-  redis_transaction:begin_transaction(F).
+create_dialogue(#dialogue{users=Users} = D, Con)->
+  case is_users_exists(Users,true,Con) of
+    true->
+      F=
+        fun()->
+          dialogue_repo:write(D, Con)
+        end,
+      redis_transaction:begin_transaction(F);
+    false->
+      {error, users_doesnt_exists}
+  end.
+
+is_users_exists([Nick|Tail],true,Con)->
+  F = fun()->user_repo:read(Nick,Con) end,
+  case transaction:begin_transaction(F) of
+    {error,_}->
+      is_users_exists(Tail,false,Con);
+    []->
+      is_users_exists(Tail,false,Con);
+    _U->
+      is_users_exists(Tail,true,Con)
+  end;
+is_users_exists([_Nick|_Tail],false,_)->
+  false;
+is_users_exists([],Res,_)->
+  Res.
 
 get_dialogue(ID, Con)->
   Fun =

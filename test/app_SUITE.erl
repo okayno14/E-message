@@ -35,7 +35,14 @@ groups()->
 		{dialogues,[],[get_dialogues1,
 						get_dialogues2,
 						get_dialogues3,
-						get_dialogues4]}
+						get_dialogues4,
+						
+						create_dialogue1,
+						create_dialogue2,
+						create_dialogue3,
+						create_dialogue4,
+						create_dialogue5,
+						create_dialogue6]}
 	].
 
 %normal data
@@ -68,7 +75,7 @@ delete_user1(_)->
 	Nick = ct:get_config(user4_nick),
 	Pass = ct:get_config(user4_pass),
 	User = #user{nick=Nick,pass=Pass},
-	undefined = client:delete_user(User).
+	ok = client:delete_user(User).
 
 %repeat delete
 delete_user2(_C)->
@@ -109,6 +116,70 @@ get_dialogues4(_)->
 	User = #user{nick = <<"QErtot22">>,pass = <<"qfWf!ffffrt1">>},
 	true = is_record(client:get_dialogues(User),error). 
 
+%normal case
+create_dialogue1(_)->
+	User = gen_user1(),
+	D = #dialogue{id = ct:get_config(dial3)+1,
+					name = <<"TestD4">>,
+					users = [ct:get_config(user1_nick),
+								ct:get_config(user3_nick)],
+					messages = []},
+	D = client:create_dialogue(User,D).
+
+%invalid nick
+create_dialogue2(_)->
+	User = gen_user_invalid_nick(),
+	D = #dialogue{id = ct:get_config(dial3)+1,
+					name = <<"TestD4">>,
+					users = [ct:get_config(user1_nick),
+								ct:get_config(user3_nick)],
+					messages = []},
+	Res = client:create_dialogue(User,D),
+	true=is_record(Res,error).
+
+%invalid pass
+create_dialogue3(_)->
+	User = gen_user_invalid_pass(),
+	D = #dialogue{id = ct:get_config(dial3)+1,
+					name = <<"TestD4">>,
+					users = [ct:get_config(user1_nick),
+								ct:get_config(user3_nick)],
+					messages = []},
+	Res = client:create_dialogue(User,D),
+	true=is_record(Res,error).
+
+%user doesn't exist
+create_dialogue4(_)->
+	User = gen_user_not_exist(),
+	D = #dialogue{id = ct:get_config(dial3)+1,
+					name = <<"TestD4">>,
+					users = [ct:get_config(user1_nick),
+								ct:get_config(user3_nick)],
+					messages = []},
+	Res = client:create_dialogue(User,D),
+	true=is_record(Res,error).
+
+%dialogue_name is invalid
+create_dialogue5(_)->
+	User = gen_user1(),
+	D = #dialogue{id = ct:get_config(dial3)+1,
+					name = <<"Te/*st D4">>,
+					users = [ct:get_config(user1_nick),
+								ct:get_config(user3_nick)],
+					messages = []},
+	Res = client:create_dialogue(User,D),
+	true=is_record(Res,error).
+
+create_dialogue6(_)->
+	User = gen_user1(),
+	UU = gen_user_not_exist(),
+	D = #dialogue{id = ct:get_config(dial3)+1,
+					name = <<"TestD4">>,
+					users = [UU#user.nick,UU#user.nick],
+					messages = []},
+	Res = client:create_dialogue(User,D),
+	true=is_record(Res,error).
+
 %----------------------------------------
 gen_user_invalid_pass()->
 	Buf=binary_to_list(ct:get_config(user1_pass)),
@@ -121,3 +192,11 @@ gen_user_invalid_nick()->
 	Nick = list_to_binary(["abrrakadabra "|Buf]),
 	Pass=ct:get_config(user1_pass),
 	#user{nick=Nick, pass=Pass}.
+
+gen_user1()->
+	Nick=ct:get_config(user1_nick),
+	Pass=ct:get_config(user1_pass),
+	#user{nick=Nick,pass=Pass}.
+
+gen_user_not_exist()->
+	#user{nick = <<"QErtot22">>,pass = <<"qfWf!ffffrt1">>}.

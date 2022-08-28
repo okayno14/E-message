@@ -11,10 +11,14 @@
 
 %% API
 -export([create_user/2,
-          get_user/3]).
+          get_user/3,
+          delete_user/2]).
 
 create_user(User, Con)->
   user_service:create_user(User, Con).
 
 get_user(Nick,Pass, Con)->
   user_service:get_user(Nick,Pass, Con).
+
+delete_user(User, Con)->
+  user_service:delete_user(User, Con).

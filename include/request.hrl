@@ -7,9 +7,9 @@
 %%% Created : 28. июль 2022 15:49
 %%%-------------------------------------------------------------------
 -author("aleksandr_work").
--record(hello,{x=1,y=1}).
 
 -record(create_user,{nick,pass}).
+-record(delete_user,{nick,pass}).
 
 -record(create_dialogue,{nick,pass,name,userNicks}).
 -record(get_dialogues,{nick,pass}).

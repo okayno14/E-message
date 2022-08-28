@@ -29,4 +29,9 @@ get_user(Nick,Pass, Con)->
   T= redis_transaction:begin_transaction(F),
   service:extract_single_value(T).
 
-
+delete_user(User, Con)->
+    F=
+    fun()->
+      user_repo:delete(User, Con)
+    end,
+  redis_transaction:begin_transaction(F).

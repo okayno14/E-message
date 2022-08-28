@@ -60,6 +60,8 @@ serve_request(Socket, Request,Con)->
   case Fun of
     create_user->
       create_user_handler(ArgsJSON,Socket,Con);
+    delete_user->
+      delete_user_handler(ArgsJSON,Socket,Con);
     create_dialogue->
       create_dialogue_handler(ArgsJSON,Socket,Con);
     get_dialogues->
@@ -324,4 +326,18 @@ delete_message_handler(ArgsJSON,Socket, Con)->
       end,
       ok;
     false->ok
+  end.
+
+delete_user_handler(ArgsJSON,Socket,Con)->
+  Args = ?json_to_record(delete_user,ArgsJSON),
+  #delete_user{nick = Nick,pass = Pass} = Args,
+  User = #user{nick = Nick,pass = Pass},
+  case common_validation_service:is_object_valid(User,user_validation_service:all()) of
+    true->
+      handle_request_result(
+        ok,
+        fun(X)-> "" end,
+        Socket);
+    false->
+      handle_error(invalid_data,Socket)
   end.

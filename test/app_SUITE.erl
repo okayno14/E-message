@@ -3,7 +3,9 @@
 -compile(export_all).
 
 -include_lib("e_message/include/entity.hrl").
+-include_lib("e_message/include/request.hrl").
 -include_lib("jsonerl/include/jsonerl.hrl").
+
 
 all()->
 	[{group,users}].
@@ -21,7 +23,9 @@ end_per_suite(Config)->
 
 groups()->
 	[
-		{users,[sequence],[get_dialogues1,get_dialogues2]}
+		{users,[sequence],[get_dialogues1,
+							get_dialogues2,
+							get_dialogues3]}
 	].
 
 %user exists
@@ -29,11 +33,21 @@ groups()->
 get_dialogues1(_)->
 	Nick=ct:get_config(user1_nick),
 	Pass=ct:get_config(user1_pass),
-	client:get_dialogues(#user{nick=Nick, pass=Pass}).
+	Res=client:get_dialogues(#user{nick=Nick, pass=Pass}),
+	false=is_record(Res,error).
 
 %invalid nick
 get_dialogues2(_)->
 	Buf=binary_to_list(ct:get_config(user1_nick)),
 	Nick = list_to_binary(["abrrakadabra "|Buf]),
 	Pass=ct:get_config(user1_pass),
-	client:get_dialogues(#user{nick=Nick, pass=Pass}).
+	Res=client:get_dialogues(#user{nick=Nick, pass=Pass}),
+	true=is_record(Res,error).
+
+%invalid pass
+get_dialogues3(_)->
+	Buf=binary_to_list(ct:get_config(user1_pass)),
+	Pass = list_to_binary(["abrrakadabra "|Buf]),
+	Nick=ct:get_config(user1_nick),
+	Res=client:get_dialogues(#user{nick=Nick, pass=Pass}),
+	true=is_record(Res,error).

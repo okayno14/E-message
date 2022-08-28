@@ -16,7 +16,8 @@ create_dialogue(U,D)->
 							name=D#dialogue.name,
 							userNicks=D#dialogue.users},
 	Req = "create_dialogue\n\n"++?record_to_json(create_dialogue,Data),
-	?json_to_record(dialogue,send_req(Req)).
+	Ans = send_req(Req),
+	parse_ans(Ans,fun(X)->?json_to_record(dialogue,X) end).
 
 get_dialogues(#user{nick=Nick,pass=Pass})->
 	Data = #get_dialogues{nick=Nick,pass=Pass},
@@ -24,7 +25,6 @@ get_dialogues(#user{nick=Nick,pass=Pass})->
 	Ans = send_req(Req),
 	parse_ans(Ans,fun(X)->?json_array_to_record_array(dialogue,X) end).
 	
-
 send_message(U,M,D)->
 	Data = #send_message{nick=U#user.nick,
 						pass=U#user.pass,
@@ -32,7 +32,8 @@ send_message(U,M,D)->
 						dialogueID=D#dialogue.id},
 	
 	Req  = "send_message\n\n"++?record_to_json(send_message,Data),
-	?json_to_record(message, send_req(Req)).
+	Ans = send_req(Req),
+	parse_ans(Ans,fun(X)->?json_to_record(message, X) end).
 
 %--------------------------------------------
 connect()->

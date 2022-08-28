@@ -108,17 +108,22 @@ handle_request_result(Res,HappyParse,Socket)->
 %%В случае успеха возвращает true,
 %%иначе - посылает клиенту ответ и возвращает false
 is_authorised(Nick,Pass,Socket,Con)->
-  U = user_controller:get_user(Nick,Pass,Con),
-  io:format("TRACE acceptor:is_authorised/4 U:~p~n",[U]),
-  case U of
-    {error,_Reason}->
-      false;
-    []->
-      handle_error(not_authorized,Socket),
-      false;
-    _User->
-      true
-  end.
+  User = #user{nick=Nick,pass=Pass},
+  case common_validation_service:is_object_valid(User,user_validation_service:all()) of
+    true->
+      U = user_controller:get_user(Nick,Pass,Con),
+      case U of
+        {error,_Reason}->
+          false;
+        []->
+          handle_error(not_authorized,Socket),
+          false;
+        _User->
+          true
+      end;
+    false->
+      false
+    end.
 
 create_user_handler(ArgsJSON, Socket, Con)->
   Args = ?json_to_record(create_user,ArgsJSON),

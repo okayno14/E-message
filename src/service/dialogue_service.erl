@@ -67,20 +67,31 @@ get_dialogues(U, Con)->
 
 get_message(U,MID,DID,Con)->
   F=
-  fun()->
-    message_repo:read(MID, Con)
-  end,
+    fun()->
+      message_repo:read(MID, Con)
+    end,
+  F1 = 
+    fun()->
+      dialogue_repo:read(DID,Con) 
+    end,
   M = service:extract_single_value(redis_transaction:begin_transaction(F)),
-  D = service:extract_single_value(transaction:begin_transaction(fun()->
-                                                                      dialogue_repo:read(DID) 
-                                                                    end)),
-  case dialogue:is_sender_or_receiver(U,M,D) of
+  D = service:extract_single_value(transaction:begin_transaction(F1)),
+  io:format("TRACE dialogue_service:get_message/4 M:~p~n",[M]),
+  io:format("TRACE dialogue_service:get_message/4 D:~p~n",[D]),
+  if 
+    (element(1,D) =:= error) or (element(1,M)=:=error) ->
+      %один из запрошенных объектов не был найден
+      {error,not_found};
     true->
-      M;
-    false->
-      {error,not_authorised}
+      %условие ошибки не сработало, следовательно, пробуем вернуть клиенту сообщение
+      case dialogue:is_sender_or_receiver(U,M,D) of
+        true->
+          M;
+        false->
+          {error,not_authorised}
+      end
   end.
-
+  
 get_messages(D, Con)->
   F=
   fun()->

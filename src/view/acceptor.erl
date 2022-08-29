@@ -233,12 +233,14 @@ send_message_handler(ArgsJSON, Socket, Con)->
           io:format("TRACE server:send_message_handler/2 Controller's res:~p~n",[Res]),
           handle_request_result(Res,fun(X)-> ?record_to_json(message,X) end,Socket)
       end;
-    false->ok
+    false->
+      handle_error(not_authorised,Socket)
   end.
 
 get_message_handler(ArgsJSON, Socket, Con)->
   Args = ?json_to_record(get_message,ArgsJSON),
   #get_message{nick = Nick,pass = Pass, messageID = MID, dialogueID = DID}=Args,
+  % handle_request_result(Args,fun(X)->?record_to_json(get_message,X) end, Socket).
   case is_authorised(Nick,Pass,Socket, Con) of
     true->
       handle_request_result(
@@ -246,7 +248,7 @@ get_message_handler(ArgsJSON, Socket, Con)->
         fun(X)-> ?record_to_json(message,X) end,
         Socket);
     false->
-      ok
+      handle_error(not_authorised,Socket)
   end.
 
 get_messages_handler(ArgsJSON, Socket, Con)->
@@ -267,7 +269,8 @@ get_messages_handler(ArgsJSON, Socket, Con)->
             fun(Y)-> parse:encodeRecordArray(Y,fun(X)->?record_to_json(message,X) end) end,
             Socket)
       end;
-    false->ok
+    false->
+      handle_error(not_authorised,Socket)
   end.
 
 read_message_handler(ArgsJSON,Socket, Con)->
@@ -290,7 +293,8 @@ read_message_handler(ArgsJSON,Socket, Con)->
             Socket)
           end
       end;
-    false->ok
+    false->
+      handle_error(not_authorised,Socket)
   end.
 
 change_text_handler(ArgsJSON,Socket, Con)->
@@ -308,7 +312,8 @@ change_text_handler(ArgsJSON,Socket, Con)->
             fun(X)-> ?record_to_json(message,X) end,
             Socket)
       end;
-    false->ok
+    false->
+      handle_error(not_authorised,Socket)
   end.
 
 delete_message_handler(ArgsJSON,Socket, Con)->
@@ -331,9 +336,9 @@ delete_message_handler(ArgsJSON,Socket, Con)->
           handle_error(element(2,M),Socket);
         element(1,D)=:=error->
           handle_error(element(2,D),Socket)
-      end,
-      ok;
-    false->ok
+      end;
+    false->
+      handle_error(not_authorised,Socket)
   end.
 
 delete_user_handler(ArgsJSON,Socket,Con)->

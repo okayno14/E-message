@@ -10,11 +10,12 @@
 all()->
 	[
 		{group,users},
+		{group,messages},
 		{group,dialogues}].
 
 init_per_suite(Config)->
 	Path = ct:get_config(server_conf_path),
-	e_message:start(Path),
+	ok=e_message:start(Path),
 	Config.
 
 end_per_suite(Config)->
@@ -32,7 +33,13 @@ groups()->
 					delete_user2,
 					delete_user3,
 					delete_user4]},
-		%%сюда вставить тестовую группу для message
+		{messages,[sequence],[get_message1,
+								get_message2,
+								get_message3,
+								get_message4,
+								get_message5,
+								get_message6,
+								get_message7]},
 		{dialogues,[sequence],[get_dialogues1,
 						get_dialogues2,
 						get_dialogues3,
@@ -93,6 +100,72 @@ delete_user2(_C)->
 delete_user3(_)->
 	User = gen_user_invalid_nick(),
 	Res = client:delete_user(User),
+	true=is_record(Res,error).
+
+%normal case
+get_message1()->
+	[{timetrap,5000}].
+get_message1(_)->
+	io:format("TRACE app_SUITE get_message1 enter in test case~n"),
+	User = gen_user1(),
+	%пользователь является адресантом
+	MID = ct:get_config(m1),
+	DID = ct:get_config(dial1),
+	io:format("TRACE app_SUITE get_message1 try to send req~n"),
+	Res = client:get_message(User,MID,DID),
+	io:format("TRACE app_SUITE get_message1 req sended~n"),
+	true=is_record(Res,message),
+	%пользователь является адресатом
+	MID2 = ct:get_config(m2),
+	Res2 = client:get_message(User,MID2,DID),
+	true=is_record(Res2,message).
+
+%invalid nick
+get_message2(_)->
+	User = gen_user_invalid_nick(),
+	MID = ct:get_config(m5),
+	DID = ct:get_config(dial2),
+	Res = client:get_message(User,MID,DID),
+	true=is_record(Res,error).
+
+%invalid pass
+get_message3(_)->
+	User = gen_user_invalid_pass(),
+	MID = ct:get_config(m5),
+	DID = ct:get_config(dial2),
+	Res = client:get_message(User,MID,DID),
+	true=is_record(Res,error).
+
+%user doesn't exist
+get_message4(_)->
+	User=gen_user_not_exist(),
+	MID = ct:get_config(m5),
+	DID = ct:get_config(dial2),
+	Res = client:get_message(User,MID,DID),
+	true=is_record(Res,error).
+
+%диалога не существует
+get_message5(_)->
+	User = gen_user1(),
+	MID = ct:get_config(m5),
+	DID = ct:get_config(dial3)+11000,
+	Res = client:get_message(User,MID,DID),
+	true=is_record(Res,error).
+
+%сообщения не существует
+get_message6(_)->
+	User = gen_user1(),
+	MID = ct:get_config(m5)+14829482,
+	DID = ct:get_config(dial3),
+	Res = client:get_message(User,MID,DID),
+	true=is_record(Res,error).
+
+%пользователь не является адресантом и не является адресатом
+get_message7(_)->
+	User = gen_user1(),
+	MID = ct:get_config(m3),
+	DID = ct:get_config(dial3),
+	Res = client:get_message(User,MID,DID),
 	true=is_record(Res,error).
 
 %invalid Pass

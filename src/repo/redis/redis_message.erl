@@ -30,9 +30,14 @@ write(Con,#message{}=Message)->
   Commited.
 
 read(Con,MID) when MID =/= -1 ->
-  {ok,JSON} = eredis:q(Con,["HGET",atom_to_list(message),MID]),
-  M = ?json_to_record(message,JSON),
-  [parse_state(M)].
+  {ok,T} = eredis:q(Con,["HGET",atom_to_list(message),MID]),
+  case T of
+    undefined->
+      [];
+    JSON->
+      M = ?json_to_record(message,JSON),
+      [parse_state(M)]
+  end.
 
 update(Con,#message{id = MID}=Message)->
   {ok,_}=eredis:q(Con,["HSET",atom_to_list(message),MID,?record_to_json(message,Message)]),

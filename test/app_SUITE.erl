@@ -152,7 +152,6 @@ get_messages1(_)->
 	User = gen_user1(),
 	DID = ct:get_config(dial1),
 	Res = client:get_messages(User,DID),
-	io:format("Res:~p~n",[Res]),
 	true=is_list(Res),
 	true=(length(Res)=:=2).
 

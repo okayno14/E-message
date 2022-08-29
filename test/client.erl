@@ -29,9 +29,7 @@ get_dialogues(#user{nick=Nick,pass=Pass})->
 	Data = #get_dialogues{nick=Nick,pass=Pass},
 	Req = "get_dialogues\n\n"++?record_to_json(get_dialogues,Data),
 	Ans = send_req(Req),
-	PP = parse_ans(Ans,fun(X)->?json_array_to_record_array(dialogue,X) end),
-	io:format("PP:~p~n",[PP]),
-	PP.
+	parse_ans(Ans,fun(X)->?json_array_to_record_array(dialogue,X) end).
 	
 quit_dialogue(#user{nick=Nick,pass=Pass},DID)->
 	Data = #quit_dialogue{nick=Nick,pass=Pass,id=DID},

@@ -31,6 +31,12 @@ get_dialogues(#user{nick=Nick,pass=Pass})->
 	Ans = send_req(Req),
 	parse_ans(Ans,fun(X)->?json_array_to_record_array(dialogue,X) end).
 	
+quit_dialogue(#user{nick=Nick,pass=Pass},DID)->
+	Data = #quit_dialogue{nick=Nick,pass=Pass,id=DID},
+	Req = "quit_dialogue\n\n"++?record_to_json(quit_dialogue,Data),
+	Ans = send_req(Req),
+	parse_ans(Ans,fun(X)-> list_to_atom(X) end).
+
 send_message(U,M,D)->
 	Data = #send_message{nick=U#user.nick,
 						pass=U#user.pass,

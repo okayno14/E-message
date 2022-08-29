@@ -91,11 +91,21 @@ fetch_messages(Con,#dialogue{messages = Messages})->
 %%переписать сообщения
 %%переписать пользователей
 %%переписать метаданные диалога
-update(Con,#dialogue{users = Nicks, messages = MID_LIST, id=DID}=Dialogue)->
+
+%если сообщений нет, то переходим к телу обновления
+update(Con,#dialogue{messages = []}=Dialogue)->
+  %%Получить сообщения. Нужно для rewrite_messages.
+  %%Действие проводится вне указанной функции, т.к. eredis не позволяет читать данные внутри транзакций
+  update(Con,Dialogue,[]);
+%если сообщения содержатся, то запрашиваем дескрипторы тех объектов, что содержатся в локальном диалоге
+update(Con,#dialogue{messages = MID_LIST}=Dialogue)->
   %%Получить сообщения. Нужно для rewrite_messages.
   %%Действие проводится вне указанной функции, т.к. eredis не позволяет читать данные внутри транзакций
   {ok,M_ListJSON} = eredis:q(Con,["HMGET",atom_to_list(message)|MID_LIST]),
   io:format("TRACE redis:dialogue/2 M_ListJSON: ~p~n",[M_ListJSON]),
+  update(Con,Dialogue,M_ListJSON).
+  
+update(Con,#dialogue{users = Nicks, id=DID}=Dialogue,M_ListJSON)->
   eredis:q(Con,["MULTI"]),
     rewrite_messages(Con,Dialogue,M_ListJSON),
     eredis:q(Con,["DEL",name_gen:gen_dialogue_user_name(Dialogue)]),
@@ -133,6 +143,12 @@ write_users(Con,#dialogue{}=Dialogue, Nicks)->
   end,
   Nicks).
 
+%если сообщений в диалоге нет, значит, нужно очистить дерево связей
+rewrite_messages(Con, #dialogue{}=Dialogue, [])->
+  DM_Tree = name_gen:gen_dialogue_message_name(Dialogue),
+  %%Удалить дерево сообщений
+  eredis:q(Con,["DEL",DM_Tree]);
+%полная перезапись дерева связок
 rewrite_messages(Con, #dialogue{}=Dialogue, M_ListJSON)->
   DM_Tree = name_gen:gen_dialogue_message_name(Dialogue),
   %%Удалить дерево сообщений

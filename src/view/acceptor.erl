@@ -193,13 +193,16 @@ quit_dialogue_handler(ArgsJSON,Socket, Con)->
           handle_error(_R,Socket);
         D->
           Res = dialogue_controller:quit_dialogue(D,_U, Con),
-          if
-            is_record(Res,dialogue)->
+          io:format("TRACE server:quit_dialogue_handler/2 Res of controller call:~p~n",[Res]),
+          case Res of
+            {error,_R1}->
+              handle_error(_R1,Socket);
+            _ when is_record(Res,dialogue)->
               handle_request_result(
                 Res,
                 fun(X)->?record_to_json(dialogue,X) end,
                 Socket);
-            is_atom(Res)->
+            _ when is_atom(Res)->
               handle_request_result(
                 Res,
                 fun(X)->atom_to_list(X) end,

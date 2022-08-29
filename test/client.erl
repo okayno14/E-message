@@ -29,7 +29,9 @@ get_dialogues(#user{nick=Nick,pass=Pass})->
 	Data = #get_dialogues{nick=Nick,pass=Pass},
 	Req = "get_dialogues\n\n"++?record_to_json(get_dialogues,Data),
 	Ans = send_req(Req),
-	parse_ans(Ans,fun(X)->?json_array_to_record_array(dialogue,X) end).
+	PP = parse_ans(Ans,fun(X)->?json_array_to_record_array(dialogue,X) end),
+	io:format("PP:~p~n",[PP]),
+	PP.
 	
 quit_dialogue(#user{nick=Nick,pass=Pass},DID)->
 	Data = #quit_dialogue{nick=Nick,pass=Pass,id=DID},
@@ -67,7 +69,24 @@ get_messages(#user{nick=Nick,pass=Pass},DID)->
 	Data = #get_messages{nick=Nick,pass=Pass,id=DID},
 	Req = "get_messages\n\n"++?record_to_json(get_messages,Data),
 	Ans = send_req(Req),
-	parse_ans(Ans,fun(X)->?json_array_to_record_array(message,X) end).
+	
+	Fun = 
+			fun(X)->
+					?json_array_to_record_array(message,X)
+			end,
+	PP=parse_ans(Ans,Fun),
+	if 
+		is_list(PP)->
+			lists:map(
+						fun(Elem)->
+							io:format("Elem:~p~n",[Elem]),
+							Elem#message{state=binary_to_atom(Elem#message.state)} 
+						end,
+						PP);
+		true->
+			PP
+	end.
+	
 
 read_message(#user{nick=Nick,pass=Pass},MID,DID)->
 	Data = #read_message{nick=Nick,
@@ -76,7 +95,25 @@ read_message(#user{nick=Nick,pass=Pass},MID,DID)->
 							dialogueID = DID},
 	Req = "read_message\n\n"++?record_to_json(read_message,Data),
 	Ans = send_req(Req),
-	parse_ans(Ans,fun(X)-> ?json_to_record(message,X) end).
+	parse_ans(Ans,
+					fun(X)->
+						Buf=?json_to_record(message,X),
+						Buf#message{state=binary_to_atom(Buf#message.state)}
+					end).
+
+change_text(#user{nick=Nick,pass=Pass},MID,DID,Text)->
+	Data = #change_text{nick=Nick,
+							pass=Pass,
+							messageID=MID,
+							dialogueID=DID,
+							text=Text},
+	Req = "change_text\n\n"++?record_to_json(change_text,Data),
+	Ans = send_req(Req),
+	parse_ans(Ans,
+					fun(X)->
+						Buf=?json_to_record(message,X),
+						Buf#message{state=binary_to_atom(Buf#message.state)}
+					end).
 
 %--------------------------------------------
 connect()->

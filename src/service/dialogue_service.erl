@@ -15,7 +15,7 @@
         get_dialogues/2,
         quit_dialogue/3,
         get_message/4,
-        get_messages/2,
+        get_messages/3,
         add_message/3,
         read_message/4,
         change_text/3,
@@ -92,12 +92,17 @@ get_message(U,MID,DID,Con)->
       end
   end.
   
-get_messages(D, Con)->
-  F=
-  fun()->
-    dialogue_repo:fetch_messages(D, Con)
-  end,
-  service:extract_multiple_values(redis_transaction:begin_transaction(F)).
+get_messages(User,D,Con)->
+  case dialogue:containsUser(D,User) of
+    true->
+      F=
+        fun()->
+          dialogue_repo:fetch_messages(D, Con)
+        end,
+      service:extract_multiple_values(redis_transaction:begin_transaction(F));
+    false->
+      {error,not_authorised}
+  end.
 
 quit_dialogue(#dialogue{users = Nick_List}=D,#user{nick = Nick}=U, Con)->
   case dialogue:containsUser(D,U) of

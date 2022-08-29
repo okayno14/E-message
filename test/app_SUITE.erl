@@ -39,7 +39,14 @@ groups()->
 								get_message4,
 								get_message5,
 								get_message6,
-								get_message7]},
+								get_message7,
+								
+								get_messages1,
+								get_messages2,
+								get_messages3,
+								get_messages4,
+								get_messages5,
+								get_messages6]},
 		{dialogues,[sequence],[get_dialogues1,
 						get_dialogues2,
 						get_dialogues3,
@@ -103,8 +110,6 @@ delete_user3(_)->
 	true=is_record(Res,error).
 
 %normal case
-get_message1()->
-	[{timetrap,5000}].
 get_message1(_)->
 	io:format("TRACE app_SUITE get_message1 enter in test case~n"),
 	User = gen_user1(),
@@ -166,6 +171,49 @@ get_message7(_)->
 	MID = ct:get_config(m3),
 	DID = ct:get_config(dial3),
 	Res = client:get_message(User,MID,DID),
+	true=is_record(Res,error).
+
+%normal case
+get_messages1(_)->
+	User = gen_user1(),
+	DID = ct:get_config(dial1),
+	Res = client:get_messages(User,DID),
+	true=is_list(Res),
+	true=(length(Res)=:=2).
+
+%invalid nick
+get_messages2(_)->
+	User = gen_user_invalid_nick(),
+	DID = ct:get_config(dial2),
+	Res = client:get_messages(User,DID),
+	true=is_record(Res,error).
+
+%invalid pass
+get_messages3(_)->
+	User = gen_user_invalid_pass(),
+	DID = ct:get_config(dial2),
+	Res = client:get_messages(User,DID),
+	true=is_record(Res,error).
+
+%user doesn't exist
+get_messages4(_)->
+	User = gen_user_not_exist(),
+	DID = ct:get_config(dial2),
+	Res = client:get_messages(User,DID),
+	true=is_record(Res,error).
+
+%dialogue doesn't exist
+get_messages5(_)->
+	User = gen_user1(),
+	DID = ct:get_config(dial2)+122231231,
+	Res = client:get_messages(User,DID),
+	true=is_record(Res,error).
+
+%пользователь не состоит в диалоге
+get_messages6(_)->
+	User = gen_user1(),
+	DID = ct:get_config(dial3),
+	Res = client:get_messages(User,DID),
 	true=is_record(Res,error).
 
 %invalid Pass

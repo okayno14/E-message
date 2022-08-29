@@ -58,6 +58,12 @@ get_message(#user{nick=Nick,pass=Pass},MID,DID)->
 	Ans = send_req(Req),
 	parse_ans(Ans,fun(X)->?json_to_record(message,X) end).
 
+get_messages(#user{nick=Nick,pass=Pass},DID)->
+	Data = #get_messages{nick=Nick,pass=Pass,id=DID},
+	Req = "get_messages\n\n"++?record_to_json(get_messages,Data),
+	Ans = send_req(Req),
+	parse_ans(Ans,fun(X)->?json_array_to_record_array(message,X) end).
+
 %--------------------------------------------
 connect()->
 	{ok,Socket} = gen_tcp:connect("localhost",5560,[{active,false}]),

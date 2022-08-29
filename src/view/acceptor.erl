@@ -254,6 +254,7 @@ get_message_handler(ArgsJSON, Socket, Con)->
 get_messages_handler(ArgsJSON, Socket, Con)->
   Args = ?json_to_record(get_messages,ArgsJSON),
   #get_messages{nick = Nick, pass=Pass, id = DID}=Args,
+  User = #user{nick=Nick,pass=Pass},
   case is_authorised(Nick,Pass,Socket, Con) of
     true->
       D=dialogue_controller:get_dialogue(DID, Con),
@@ -262,7 +263,7 @@ get_messages_handler(ArgsJSON, Socket, Con)->
         {error,_R}->
           handle_error(_R,Socket);
         D->
-          Res = dialogue_controller:get_messages(D, Con),
+          Res = dialogue_controller:get_messages(User,D, Con),
           io:format("TRACE server:get_messages_handler/3 Messages:~p~n",[Res]),
           handle_request_result(
             Res,

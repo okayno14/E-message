@@ -18,7 +18,7 @@
         get_messages/3,
         add_message/3,
         read_message/4,
-        change_text/3,
+        change_text/4,
         delete_message/4,
         delete_dialogue/2]).
 
@@ -157,7 +157,11 @@ read_message(#user{nick=Nick}=U,#message{from=From}=M,D,Con)->
       {error,not_authorised}
   end.
 
-change_text(M,Text, Con)->
+change_text(#user{nick = Nick1},#message{from = Nick2},_,_) when Nick1 =/= Nick2->
+  {error,not_authorised};
+change_text(_,#message{text=Text},Text,_)->
+  {error,no_difference};
+change_text(#user{nick = Nick},#message{from = Nick,text=_T1}=M,Text,Con)->
   Fun=
   fun()->
     M_Persited = M#message{text = Text},

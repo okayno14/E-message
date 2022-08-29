@@ -312,7 +312,7 @@ change_text_handler(ArgsJSON,Socket, Con)->
         {error,_R}->
           handle_error(_R,Socket);
         M->
-          Res = dialogue_controller:change_text(M,Text, Con),
+          Res = dialogue_controller:change_text(User,M,Text,Con),
           handle_request_result(
             Res,
             fun(X)-> ?record_to_json(message,X) end,

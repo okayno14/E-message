@@ -29,7 +29,8 @@ groups()->
 		{messages,[sequence],gen_case_names(get_message,7)++
 								gen_case_names(get_messages,6)++
 								gen_case_names(send_message,7)++
-								gen_case_names(read_message,8)},
+								gen_case_names(read_message,8)++
+								gen_case_names(change_text,5)},
 		{dialogues,[sequence],gen_case_names(get_dialogues,4)++
 								gen_case_names(create_dialogue,6)++
 								gen_case_names(quit_dialogue,6)}
@@ -311,6 +312,52 @@ read_message8(_)->
 	MID = ct:get_config(m3),
 	DID = ct:get_config(dial3),
 	Res = client:read_message(User,MID,DID),
+	true = is_record(Res,error).
+
+%normal_case
+change_text1(_)->
+	User = gen_user1(),
+	MID = ct:get_config(m5)+1,
+	DID = ct:get_config(dial1),
+	Text = <<"bye">>,
+	Orig = client:get_message(User,MID,DID),
+	Target = client:change_text(User,MID,DID,Text),
+	true = (Orig#message.text =/= Target#message.text).
+
+%invalid_nick
+change_text2(_)->
+	User = gen_user_invalid_nick(),
+	MID = ct:get_config(m5)+1,
+	DID = ct:get_config(dial1),
+	Text = <<"bye">>,
+	Res = client:change_text(User,MID,DID,Text),
+	true = is_record(Res,error).
+
+%invalid_pass
+change_text3(_)->
+	User = gen_user_invalid_pass(),
+	MID = ct:get_config(m5)+1,
+	DID = ct:get_config(dial1),
+	Text = <<"bye">>,
+	Res = client:change_text(User,MID,DID,Text),
+	true = is_record(Res,error).
+
+%user doesn't exist
+change_text4(_)->
+	User = gen_user_not_exist(),
+	MID = ct:get_config(m5)+1,
+	DID = ct:get_config(dial1),
+	Text = <<"bye">>,
+	Res = client:change_text(User,MID,DID,Text),
+	true = is_record(Res,error).
+
+%пользователь не является адресантом
+change_text5(_)->
+	User = gen_user1(),
+	MID = ct:get_config(m2),
+	DID = ct:get_config(dial1),
+	Text = <<"bye">>,
+	Res = client:change_text(User,MID,DID,Text),
 	true = is_record(Res,error).
 
 %user exists

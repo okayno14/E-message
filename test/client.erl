@@ -56,13 +56,27 @@ get_message(#user{nick=Nick,pass=Pass},MID,DID)->
 	
 	Req = "get_message\n\n"++?record_to_json(get_message,Data),
 	Ans = send_req(Req),
-	parse_ans(Ans,fun(X)->?json_to_record(message,X) end).
+	parse_ans(Ans,
+					fun(X)->
+						Buf=?json_to_record(message,X),
+						Buf#message{state=binary_to_atom(Buf#message.state)}
+					end).
+	
 
 get_messages(#user{nick=Nick,pass=Pass},DID)->
 	Data = #get_messages{nick=Nick,pass=Pass,id=DID},
 	Req = "get_messages\n\n"++?record_to_json(get_messages,Data),
 	Ans = send_req(Req),
 	parse_ans(Ans,fun(X)->?json_array_to_record_array(message,X) end).
+
+read_message(#user{nick=Nick,pass=Pass},MID,DID)->
+	Data = #read_message{nick=Nick,
+							pass = Pass,
+							messageID = MID,
+							dialogueID = DID},
+	Req = "read_message\n\n"++?record_to_json(read_message,Data),
+	Ans = send_req(Req),
+	parse_ans(Ans,fun(X)-> ?json_to_record(message,X) end).
 
 %--------------------------------------------
 connect()->

@@ -24,55 +24,15 @@ end_per_suite(Config)->
 
 groups()->
 	[
-		{users,[sequence],[create_user1,
-					create_user2,
-					create_user3,
-					create_user4,
-					
-					delete_user1,
-					delete_user2,
-					delete_user3,
-					delete_user4]},
-		{messages,[sequence],[get_message1,
-								get_message2,
-								get_message3,
-								get_message4,
-								get_message5,
-								get_message6,
-								get_message7,
-								
-								get_messages1,
-								get_messages2,
-								get_messages3,
-								get_messages4,
-								get_messages5,
-								get_messages6,
-								
-								send_message1,
-								send_message2,
-								send_message3,
-								send_message4,
-								send_message5,
-								send_message6,
-								send_message7]},
-		{dialogues,[sequence],[get_dialogues1,
-						get_dialogues2,
-						get_dialogues3,
-						get_dialogues4,
-						
-						create_dialogue1,
-						create_dialogue2,
-						create_dialogue3,
-						create_dialogue4,
-						create_dialogue5,
-						create_dialogue6,
-						
-						quit_dialogue1,
-						quit_dialogue2,
-						quit_dialogue3,
-						quit_dialogue4,
-						quit_dialogue5,
-						quit_dialogue6]}
+		{users,[sequence],gen_case_names(create_user,4)++
+							gen_case_names(delete_user,4)},
+		{messages,[sequence],gen_case_names(get_message,7)++
+								gen_case_names(get_messages,6)++
+								gen_case_names(send_message,7)++
+								gen_case_names(read_message,8)},
+		{dialogues,[sequence],gen_case_names(get_dialogues,4)++
+								gen_case_names(create_dialogue,6)++
+								gen_case_names(quit_dialogue,6)}
 	].
 
 %normal data
@@ -287,6 +247,72 @@ send_message7(_)->
 	Res = client:send_message(User,M,D),
 	true=is_record(Res,error).
 
+%normal case
+read_message1(_)->
+	User=gen_user1(),
+	MID = ct:get_config(m2),
+	DID = ct:get_config(dial1),
+	Res = client:read_message(User,MID,DID),
+	Sample = client:get_message(User,MID,DID),
+	Target = Sample#message{state=read,timeSending=Res#message.timeSending},
+	true = (Sample=:=Target).
+	
+%invalid_nick
+read_message2(_)->
+	User=gen_user_invalid_nick(),
+	MID = ct:get_config(m2),
+	DID = ct:get_config(dial1),
+	Res = client:read_message(User,MID,DID),
+	is_record(Res,error).
+
+%invalid_pass
+read_message3(_)->
+	User=gen_user_invalid_pass(),
+	MID = ct:get_config(m2),
+	DID = ct:get_config(dial1),
+	Res = client:read_message(User,MID,DID),
+	is_record(Res,error).
+
+%user doesn't exist
+read_message4(_)->
+	User=gen_user_not_exist(),
+	MID = ct:get_config(m2),
+	DID = ct:get_config(dial1),
+	Res = client:read_message(User,MID,DID),
+	is_record(Res,error).
+
+%message doesn't exist
+read_message5(_)->
+	User=gen_user1(),
+	MID = ct:get_config(m5)+1842948294,
+	DID = ct:get_config(dial1),
+	Res = client:read_message(User,MID,DID),
+	is_record(Res,error).
+
+%прочитать прочитанное
+read_message6(_)->
+	User=gen_user1(),
+	MID = ct:get_config(m2),
+	DID = ct:get_config(dial1),
+	Res = client:read_message(User,MID,DID),
+	is_record(Res,error).
+
+%прочитать своё сообщение
+read_message7(_)->
+	User=gen_user1(),
+	MID = ct:get_config(m5)+1,
+	DID = ct:get_config(dial1),
+	Res = client:read_message(User,MID,DID),
+	is_record(Res,error).
+
+%прочитать сообщение, для которого пользователь не является адресатом
+read_message8(_)->
+	User=gen_user1(),
+	MID = ct:get_config(m3),
+	DID = ct:get_config(dial3),
+	Res = client:read_message(User,MID,DID),
+	true = is_record(Res,error).
+
 %user exists
 %valid data
 get_dialogues1(_)->
@@ -480,3 +506,14 @@ is_user_in_dialogue(DID,User)->
 		_->
 			{error,unknown_server_error}
 	end.
+
+gen_case_names(Atom,X) when is_atom(Atom)->
+	gen_case_names(Atom,X,[]).
+
+gen_case_names(_,0,Res)->
+	Res;
+gen_case_names(Atom,X,Res)->
+	Str = atom_to_list(Atom),
+	Num = integer_to_list(X),
+	CaseName = list_to_atom(Str++Num),
+	gen_case_names(Atom,X-1,[CaseName|Res]).

@@ -19,7 +19,7 @@
 -record(get_message,{nick,pass,messageID,dialogueID}).
 -record(get_messages,{nick,pass,id}).
 -record(read_message,{nick,pass,messageID,dialogueID}).
--record(change_text,{nick,pass,id,text}).
+-record(change_text,{nick,pass,messageID,dialogueID,text}).
 -record(delete_message,{nick,pass,messageID,dialogueID}).
 
 -record(create_artifact,{mime,fileName}).

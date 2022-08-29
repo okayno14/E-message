@@ -152,7 +152,7 @@ read_message(#user{nick=Nick}=U,#message{from=From}=M,D,Con)->
           message_repo:update(M_Persisted, Con)
       end;
     true when Nick =:= From->
-      {error,not_authorised};
+      {error,sender_read_message};
     false->
       {error,not_authorised}
   end.

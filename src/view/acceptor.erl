@@ -244,7 +244,6 @@ send_message_handler(ArgsJSON, Socket, Con)->
 get_message_handler(ArgsJSON, Socket, Con)->
   Args = ?json_to_record(get_message,ArgsJSON),
   #get_message{nick = Nick,pass = Pass, messageID = MID, dialogueID = DID}=Args,
-  % handle_request_result(Args,fun(X)->?record_to_json(get_message,X) end, Socket).
   case is_authorised(Nick,Pass,Socket, Con) of
     true->
       handle_request_result(
@@ -281,9 +280,10 @@ get_messages_handler(ArgsJSON, Socket, Con)->
 read_message_handler(ArgsJSON,Socket, Con)->
   Args = ?json_to_record(read_message,ArgsJSON),
   #read_message{nick = Nick,pass = Pass, messageID=MID, dialogueID=DID}=Args,
+  User = #user{nick=Nick,pass=Pass},
   case is_authorised(Nick,Pass,Socket, Con) of
     true->
-      case dialogue_controller:get_message(MID, Con) of
+      case dialogue_controller:get_message(User,MID,DID,Con) of
         {error,_R}->
           handle_error(_R,Socket);
         M->
@@ -291,7 +291,7 @@ read_message_handler(ArgsJSON,Socket, Con)->
             {error,_RR}->
               handle_error(_RR,Socket);
             D->
-              Res = dialogue_controller:read_message(#user{nick=Nick},M,D),
+              Res = dialogue_controller:read_message(#user{nick=Nick},M,D,Con),
               handle_request_result(
             Res,
             fun(X)-> ?record_to_json(message,X) end,
@@ -304,10 +304,11 @@ read_message_handler(ArgsJSON,Socket, Con)->
 
 change_text_handler(ArgsJSON,Socket, Con)->
   Args = ?json_to_record(change_text,ArgsJSON),
-  #change_text{nick = Nick,pass = Pass,id=MID,text = Text}=Args,
+  #change_text{nick = Nick,pass = Pass,messageID=MID, dialogueID=DID,text = Text}=Args,
+  User = #user{nick=Nick,pass=Pass},
   case is_authorised(Nick,Pass,Socket, Con) of
     true->
-      case dialogue_controller:get_message(MID, Con) of
+      case dialogue_controller:get_message(User,MID,DID,Con) of
         {error,_R}->
           handle_error(_R,Socket);
         M->

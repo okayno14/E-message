@@ -46,7 +46,15 @@ groups()->
 								get_messages3,
 								get_messages4,
 								get_messages5,
-								get_messages6]},
+								get_messages6,
+								
+								send_message1,
+								send_message2,
+								send_message3,
+								send_message4,
+								send_message5,
+								send_message6,
+								send_message7]},
 		{dialogues,[sequence],[get_dialogues1,
 						get_dialogues2,
 						get_dialogues3,
@@ -106,6 +114,12 @@ delete_user2(_C)->
 %invalid Nick
 delete_user3(_)->
 	User = gen_user_invalid_nick(),
+	Res = client:delete_user(User),
+	true=is_record(Res,error).
+
+%invalid Pass
+delete_user4(_)->
+	User = gen_user_invalid_pass(),
 	Res = client:delete_user(User),
 	true=is_record(Res,error).
 
@@ -216,10 +230,61 @@ get_messages6(_)->
 	Res = client:get_messages(User,DID),
 	true=is_record(Res,error).
 
-%invalid Pass
-delete_user4(_)->
+%normal case
+send_message1(_)->
+	User = gen_user1(),
+	M = #message{text = <<"hello world">>},
+	D = #dialogue{id=ct:get_config(dial1)},
+	Res = client:send_message(User,M,D),
+	true=is_record(Res,message),
+	true = (Res#message.id =:= ct:get_config(m5)+1).
+
+%invalid nick
+send_message2(_)->
+	User = gen_user_invalid_nick(),
+	M = #message{text = <<"hello world">>},
+	D = #dialogue{id=ct:get_config(dial1)},
+	Res = client:send_message(User,M,D),
+	true=is_record(Res,error).
+
+%invalid pass
+send_message3(_)->
 	User = gen_user_invalid_pass(),
-	Res = client:delete_user(User),
+	M = #message{text = <<"hello world">>},
+	D = #dialogue{id=ct:get_config(dial1)},
+	Res = client:send_message(User,M,D),
+	true=is_record(Res,error).
+
+%user doesn't exist
+send_message4(_)->
+	User = gen_user_not_exist(),
+	M = #message{text = <<"hello world">>},
+	D = #dialogue{id=ct:get_config(dial1)},
+	Res = client:send_message(User,M,D),
+	true=is_record(Res,error).
+
+%dialogue doesn't exist
+send_message5(_)->
+	User = gen_user1(),
+	M = #message{text = <<"hello world">>},
+	D = #dialogue{id=ct:get_config(dial1)+84938490},
+	Res = client:send_message(User,M,D),
+	true=is_record(Res,error).
+
+%адресанта нет в этом диалоге
+send_message6(_)->
+	User = gen_user1(),
+	M = #message{text = <<"hello world">>},
+	D = #dialogue{id=ct:get_config(dial3)},
+	Res = client:send_message(User,M,D),
+	true=is_record(Res,error).
+
+%пустой текст
+send_message7(_)->
+	User = gen_user_invalid_pass(),
+	M = #message{text = <<"">>},
+	D = #dialogue{id=ct:get_config(dial2)},
+	Res = client:send_message(User,M,D),
 	true=is_record(Res,error).
 
 %user exists

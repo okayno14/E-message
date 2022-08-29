@@ -127,16 +127,21 @@ quit_dialogue(#dialogue{users = Nick_List}=D,#user{nick = Nick}=U, Con)->
       {error,user_not_found_in_dialogue}
   end.
 
-add_message(D,M, Con)->
-  Fun=
-    fun()->
-      M_Persisted = message_repo:write(message:send(M), Con),
-      D_Updated = dialogue:add_message(D,M_Persisted),
-      dialogue_repo:update(D_Updated, Con),
-      [M_Persisted]
-    end,
-  T = redis_transaction:begin_transaction(Fun),
-  service:extract_single_value(T).
+add_message(D,#message{from = From}=M,Con)->
+  case dialogue:containsUser(D,#user{nick=From}) of 
+    true->
+      Fun=
+        fun()->
+          M_Persisted = message_repo:write(message:send(M), Con),
+          D_Updated = dialogue:add_message(D,M_Persisted),
+          dialogue_repo:update(D_Updated, Con),
+          [M_Persisted]
+        end,
+      T = redis_transaction:begin_transaction(Fun),
+      service:extract_single_value(T);
+    false->
+      {error,user_not_found_in_dialogue}
+  end.
 
 read_message(#user{nick=Nick}=U,#message{from=From}=M,D,Con)->
   case dialogue:containsUser(D,U) of

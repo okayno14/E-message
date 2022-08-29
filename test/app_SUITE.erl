@@ -283,8 +283,10 @@ quit_dialogue3(_)->
 	true = is_user_in_dialogue(DID,User),	
 	client:quit_dialogue(User,DID),
 	%после выхода в списке диалогов D1 отсутствует
-	false = is_user_in_dialogue(DID,User).
+	false = is_user_in_dialogue(DID,User),
 	%получить сообщение M1: если сервер его выдаст, значит после выхода пользователя сообщения не чистились
+	Res = client:get_message(User,ct:get_config(m1),DID),
+	true=is_record(Res,message).
 
 %выход из диалогов в которых остался только user1
 quit_dialogue4(_)->
@@ -303,8 +305,10 @@ quit_dialogue4(_)->
 	%в списке диалогов пользователя содержится D2
 	true = is_user_in_dialogue(ct:get_config(dial2),User),
 	client:quit_dialogue(User,ct:get_config(dial2)),
-	false = is_user_in_dialogue(ct:get_config(dial2),User).
+	false = is_user_in_dialogue(ct:get_config(dial2),User),
 	%проверить, что сообщение было удалено
+	Res = client:get_message(User,ct:get_config(m5),ct:get_config(dial2)),
+	true=is_record(Res,error).
 	%---РАБОТА С D2----
 
 %выход из диалога, в котором user1 не состоит

@@ -113,6 +113,12 @@ change_text(#user{nick=Nick,pass=Pass},MID,DID,Text)->
 						Buf#message{state=binary_to_atom(Buf#message.state)}
 					end).
 
+delete_message(#user{nick=Nick,pass=Pass},MID,DID)->
+	Data = #delete_message{nick=Nick,pass=Pass,messageID=MID,dialogueID=DID},
+	Req = "delete_message\n\n"++?record_to_json(delete_message,Data),
+	Ans = send_req(Req),
+	parse_ans(Ans,fun(X)-> list_to_atom(X) end).
+
 %--------------------------------------------
 connect()->
 	{ok,Socket} = gen_tcp:connect("localhost",5560,[{active,false}]),

@@ -328,7 +328,7 @@ delete_message_handler(ArgsJSON,Socket, Con)->
   case is_authorised(Nick,Pass,Socket, Con) of
     true->
       User = #user{nick = Nick,pass = Pass},
-      M=dialogue_controller:get_message(MID, Con),
+      M=dialogue_controller:get_message(User,MID,DID,Con),
       D=dialogue_controller:get_dialogue(DID, Con),
       io:format("TRACE server:delete_message_handler/3 D: ~p~n",[D]),
       if

@@ -30,7 +30,8 @@ groups()->
 								gen_case_names(get_messages,6)++
 								gen_case_names(send_message,7)++
 								gen_case_names(read_message,8)++
-								gen_case_names(change_text,5)},
+								gen_case_names(change_text,5)++
+								gen_case_names(delete_message,7)},
 		{dialogues,[sequence],gen_case_names(get_dialogues,4)++
 								gen_case_names(create_dialogue,6)++
 								gen_case_names(quit_dialogue,6)}
@@ -358,6 +359,61 @@ change_text5(_)->
 	DID = ct:get_config(dial1),
 	Text = <<"bye">>,
 	Res = client:change_text(User,MID,DID,Text),
+	true = is_record(Res,error).
+
+%normal case
+delete_message1(_)->
+	User = gen_user1(),
+	MID = ct:get_config(m5)+1,
+	DID = ct:get_config(dial1),
+	ok = client:delete_message(User,MID,DID).
+
+%invalid nick
+delete_message2(_)->
+	User = gen_user_invalid_nick(),
+	MID = ct:get_config(m5)+1,
+	DID = ct:get_config(dial1),
+	Res = client:delete_message(User,MID,DID),
+	true = is_record(Res,error).
+
+%invalid pass
+delete_message3(_)->
+	User = gen_user_invalid_pass(),
+	MID = ct:get_config(m5)+1,
+	DID = ct:get_config(dial1),
+	Res = client:delete_message(User,MID,DID),
+	true = is_record(Res,error).
+
+%user doesn't exist
+delete_message4(_)->
+	User = gen_user_not_exist(),
+	MID = ct:get_config(m5)+1,
+	DID = ct:get_config(dial1),
+	Res = client:delete_message(User,MID,DID),
+	true = is_record(Res,error).
+
+%пользователь удаляет сообщение, которое не отправлял
+delete_message5(_)->
+	User = gen_user1(),
+	MID = ct:get_config(m2),
+	DID = ct:get_config(dial1),
+	Res = client:delete_message(User,MID,DID),
+	true = is_record(Res,error).
+
+%пользователь удаляет сообщение, которого нет в диалоге
+delete_message6(_)->
+	User = gen_user1(),
+	MID = ct:get_config(m2)+8493849,
+	DID = ct:get_config(dial1),
+	Res = client:delete_message(User,MID,DID),
+	true = is_record(Res,error).
+
+%неправильно указан номер диалога для удаляемого сообщения
+delete_message7(_)->
+	User = gen_user1(),
+	MID = ct:get_config(m5),
+	DID = ct:get_config(dial1),
+	Res = client:delete_message(User,MID,DID),
 	true = is_record(Res,error).
 
 %user exists

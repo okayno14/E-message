@@ -109,12 +109,7 @@ handle_error(_Reason, Socket)->
 %%HappyParse - callback-парсер, который превращает Erlang-терм в строку-ответ
 %%Socket - сокет, по которому осуществляется связь с клиентом
 handle_request_result(Res,HappyParse,Socket)->
-  case Res of
-    {error,_R}->
-      handle_error(_R,Socket);
-    OK->
-      gen_tcp:send(Socket,["ok\n\n"|HappyParse(OK)])
-  end.
+  gen_tcp:send(Socket,["ok\n\n"|HappyParse(Res)]).
 
 %Пытается авторизовать пользователя.
 %Если данные не валидны или пользователя нет в системе, то отправляется исключение
@@ -130,26 +125,6 @@ authorise(Nick,Pass,Con)->
     throw:{error,not_found}->
       throw({error,not_authorised})
   end.
-
-%%Ищет пользователя в базе для проведения авторизации.
-%%В случае успеха возвращает true,
-%%иначе - посылает клиенту ответ и возвращает false
-is_authorised(Nick,Pass,_Socket,Con)->
-  User = #user{nick=Nick,pass=Pass},
-  case common_validation_service:is_object_valid(User,user_validation_service:all()) of
-    true->
-      U = user_controller:get_user(Nick,Pass,Con),
-      case U of
-        {error,_Reason}->
-          false;
-        []->
-          false;
-        _User->
-          true
-      end;
-    false->
-      false
-    end.
 
 create_user_handler(ArgsJSON, Socket, Con)->
   Args = ?json_to_record(create_user,ArgsJSON),

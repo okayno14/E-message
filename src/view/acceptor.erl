@@ -216,8 +216,8 @@ send_message_handler(ArgsJSON, Socket, Con)->
                                           dialogue_validation_service:all(),
                                           #dialogue.id),
   common_validation_service:check_field(#message{text=Txt},
-                                                      message_validation_service:all(),
-                                                      #message.text),
+                                          message_validation_service:all(),
+                                          #message.text),
   authorise(Nick,Pass,Con),
   D=dialogue_controller:get_dialogue(DID, Con),
   M=#message{from = Nick, text = Txt, timeSending = time_millis()},
@@ -278,21 +278,22 @@ change_text_handler(ArgsJSON,Socket, Con)->
   Args = ?json_to_record(change_text,ArgsJSON),
   #change_text{nick = Nick,pass = Pass,messageID=MID, dialogueID=DID,text = Text}=Args,
   User = #user{nick=Nick,pass=Pass},
-  case is_authorised(Nick,Pass,Socket, Con) of
-    true->
-      case dialogue_controller:get_message(User,MID,DID,Con) of
-        {error,_R}->
-          handle_error(_R,Socket);
-        M->
-          Res = dialogue_controller:change_text(User,M,Text,Con),
-          handle_request_result(
-            Res,
-            fun(X)-> ?record_to_json(message,X) end,
-            Socket)
-      end;
-    false->
-      handle_error(not_authorised,Socket)
-  end.
+  common_validation_service:check_field(#message{id=MID},
+                                          message_validation_service:all(),
+                                          #message.id),
+  common_validation_service:check_field(#dialogue{id=DID},
+                                          dialogue_validation_service:all(),
+                                          #dialogue.id),
+  common_validation_service:check_field(#message{text=Text},
+                                          message_validation_service:all(),
+                                          #message.text),
+  authorise(Nick,Pass,Con),
+  M = dialogue_controller:get_message(User,MID,DID,Con),
+  Res = dialogue_controller:change_text(User,M,Text,Con),
+  handle_request_result(
+    Res,
+    fun(X)-> ?record_to_json(message,X) end,
+    Socket).
 
 delete_message_handler(ArgsJSON,Socket, Con)->
   Args = ?json_to_record(delete_message,ArgsJSON),

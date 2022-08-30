@@ -298,27 +298,22 @@ change_text_handler(ArgsJSON,Socket, Con)->
 delete_message_handler(ArgsJSON,Socket, Con)->
   Args = ?json_to_record(delete_message,ArgsJSON),
   #delete_message{nick = Nick,pass = Pass,messageID = MID, dialogueID = DID}=Args,
-  case is_authorised(Nick,Pass,Socket, Con) of
-    true->
-      User = #user{nick = Nick,pass = Pass},
-      M=dialogue_controller:get_message(User,MID,DID,Con),
-      D=dialogue_controller:get_dialogue(DID, Con),
-      io:format("TRACE server:delete_message_handler/3 D: ~p~n",[D]),
-      if
-        is_record(M,message) and is_record(D,dialogue)->
-          Res = dialogue_controller:delete_message(D,M,User, Con),
-          handle_request_result(
-            Res,
-            fun(X)->atom_to_list(X) end,
-            Socket);
-        element(1,M)=:=error->
-          handle_error(element(2,M),Socket);
-        element(1,D)=:=error->
-          handle_error(element(2,D),Socket)
-      end;
-    false->
-      handle_error(not_authorised,Socket)
-  end.
+  common_validation_service:check_field(#message{id=MID},
+                                          message_validation_service:all(),
+                                          #message.id),
+  common_validation_service:check_field(#dialogue{id=DID},
+                                          dialogue_validation_service:all(),
+                                          #dialogue.id),
+  authorise(Nick,Pass,Con),
+  User = #user{nick = Nick,pass = Pass},
+  M=dialogue_controller:get_message(User,MID,DID,Con),
+  D=dialogue_controller:get_dialogue(DID, Con),
+  io:format("TRACE server:delete_message_handler/3 D: ~p~n",[D]),
+  Res = dialogue_controller:delete_message(D,M,User,Con),
+  handle_request_result(
+    Res,
+    fun(X)->atom_to_list(X) end,
+    Socket).
 
 delete_user_handler(ArgsJSON,Socket,Con)->
   Args = ?json_to_record(delete_user,ArgsJSON),

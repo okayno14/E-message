@@ -56,30 +56,37 @@ time_millis()->
 
 %%обработка клиентских запросов
 serve_request(Socket, Request,Con)->
-  [Fun,ArgsJSON]=parseRequest(Request),
-  case Fun of
-    create_user->
-      create_user_handler(ArgsJSON,Socket,Con);
-    delete_user->
-      delete_user_handler(ArgsJSON,Socket,Con);
-    create_dialogue->
-      create_dialogue_handler(ArgsJSON,Socket,Con);
-    get_dialogues->
-      get_dialogues_handler(ArgsJSON,Socket,Con);
-    quit_dialogue->
-      quit_dialogue_handler(ArgsJSON,Socket,Con);
-    send_message->
-      send_message_handler(ArgsJSON,Socket,Con);
-    get_message->
-      get_message_handler(ArgsJSON,Socket,Con);
-    get_messages->
-      get_messages_handler(ArgsJSON,Socket,Con);
-    read_message->
-      read_message_handler(ArgsJSON,Socket,Con);
-    change_text->
-      change_text_handler(ArgsJSON,Socket,Con);
-    delete_message->
-      delete_message_handler(ArgsJSON,Socket,Con)
+  try
+    [Fun,ArgsJSON]=parseRequest(Request),
+    case Fun of
+      create_user->
+        create_user_handler(ArgsJSON,Socket,Con);
+      delete_user->
+        delete_user_handler(ArgsJSON,Socket,Con);
+      create_dialogue->
+        create_dialogue_handler(ArgsJSON,Socket,Con);
+      get_dialogues->
+        get_dialogues_handler(ArgsJSON,Socket,Con);
+      quit_dialogue->
+        quit_dialogue_handler(ArgsJSON,Socket,Con);
+      send_message->
+        send_message_handler(ArgsJSON,Socket,Con);
+      get_message->
+        get_message_handler(ArgsJSON,Socket,Con);
+      get_messages->
+        get_messages_handler(ArgsJSON,Socket,Con);
+      read_message->
+        read_message_handler(ArgsJSON,Socket,Con);
+      change_text->
+        change_text_handler(ArgsJSON,Socket,Con);
+      delete_message->
+        delete_message_handler(ArgsJSON,Socket,Con)
+    end
+  catch
+    throw:{error,invalid_data} ->
+      handle_error(invalid_data,Socket);
+    throw:{error,_R}->
+      handle_error(_R,Socket)
   end.
 
 parseRequest(Request)->
@@ -131,16 +138,12 @@ create_user_handler(ArgsJSON, Socket, Con)->
   Args = ?json_to_record(create_user,ArgsJSON),
   #create_user{nick = Nick,pass = Pass} = Args,
   User = #user{nick = Nick,pass = Pass},
-  case common_validation_service:is_object_valid(User,user_validation_service:all()) of
-    true->
-      Res=user_controller:create_user(User, Con),
-      handle_request_result(
-        Res,
-        fun(X)-> ?record_to_json(user,X) end,
-        Socket);
-    false->
-      handle_error(invalid_data,Socket)
-  end.
+  common_validation_service:check_object(User,user_validation_service:all()),
+  Res=user_controller:create_user(User, Con),
+  handle_request_result(
+    Res,
+    fun(X)-> ?record_to_json(user,X) end,
+    Socket).
 
 create_dialogue_handler(ArgsJSON,Socket, Con)->
   Args = ?json_to_record(create_dialogue,ArgsJSON),
@@ -351,13 +354,9 @@ delete_user_handler(ArgsJSON,Socket,Con)->
   Args = ?json_to_record(delete_user,ArgsJSON),
   #delete_user{nick = Nick,pass = Pass} = Args,
   User = #user{nick = Nick,pass = Pass},
-  case common_validation_service:is_object_valid(User,user_validation_service:all()) of
-    true->
-      Res = user_controller:delete_user(User, Con),
-      handle_request_result(
-        Res,
-        fun(X)-> atom_to_list(X) end,
-        Socket);
-    false->
-      handle_error(invalid_data,Socket)
-  end.
+  common_validation_service:check_object(User,user_validation_service:all()),
+  Res = user_controller:delete_user(User, Con),
+  handle_request_result(
+    Res,
+    fun(X)-> atom_to_list(X) end,
+    Socket).

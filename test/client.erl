@@ -77,8 +77,9 @@ get_messages(#user{nick=Nick,pass=Pass},DID)->
 		is_list(PP)->
 			lists:map(
 						fun(Elem)->
-							io:format("Elem:~p~n",[Elem]),
-							Elem#message{state=binary_to_atom(Elem#message.state)} 
+							B = Elem#message{state=binary_to_atom(Elem#message.state)},
+							io:format("Elem:~p~n",[B]),
+							B 
 						end,
 						PP);
 		true->

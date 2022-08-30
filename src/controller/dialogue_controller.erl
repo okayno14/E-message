@@ -39,7 +39,7 @@ get_message(U,MID,DID,Con)->
   error_catcher:handle(dialogue_service:get_message(U,MID,DID,Con)).
 
 get_messages(User,D, Con)->
-  dialogue_service:get_messages(User,D, Con).
+  error_catcher:handle(dialogue_service:get_messages(User,D, Con)).
 
 add_message(D,M, Con)->
   dialogue_service:add_message(D,M, Con).

@@ -254,24 +254,18 @@ get_messages_handler(ArgsJSON, Socket, Con)->
   Args = ?json_to_record(get_messages,ArgsJSON),
   #get_messages{nick = Nick, pass=Pass, id = DID}=Args,
   User = #user{nick=Nick,pass=Pass},
-  case is_authorised(Nick,Pass,Socket, Con) of
-    true->
-      D=dialogue_controller:get_dialogue(DID, Con),
-      io:format("TRACE server:get_messages_handler/3 D:~p~n",[D]),
-      case D of
-        {error,_R}->
-          handle_error(_R,Socket);
-        D->
-          Res = dialogue_controller:get_messages(User,D, Con),
-          io:format("TRACE server:get_messages_handler/3 Messages:~p~n",[Res]),
-          handle_request_result(
-            Res,
-            fun(Y)-> parse:encodeRecordArray(Y,fun(X)->?record_to_json(message,X) end) end,
-            Socket)
-      end;
-    false->
-      handle_error(not_authorised,Socket)
-  end.
+  authorise(Nick,Pass,Con),
+  common_validation_service:check_field(#dialogue{id=DID},
+                                          dialogue_validation_service:all(),
+                                          #dialogue.id),
+  D=dialogue_controller:get_dialogue(DID, Con),
+  io:format("TRACE server:get_messages_handler/3 D:~p~n",[D]),
+  Res = dialogue_controller:get_messages(User,D, Con),
+  io:format("TRACE server:get_messages_handler/3 Messages:~p~n",[Res]),
+  handle_request_result(
+    Res,
+    fun(Y)-> parse:encodeRecordArray(Y,fun(X)->?record_to_json(message,X) end) end,
+    Socket).
 
 read_message_handler(ArgsJSON,Socket, Con)->
   Args = ?json_to_record(read_message,ArgsJSON),

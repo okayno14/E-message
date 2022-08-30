@@ -7,7 +7,7 @@
 %%% Created : 28. июль 2022 18:21
 %%%-------------------------------------------------------------------
 -module(user_repo).
--include("../../include/entity.hrl").
+-include_lib("e_message/include/entity.hrl").
 -export([write/2,
         read/2,
         read/3,
@@ -43,5 +43,5 @@ read(Nick,Pass, Con)->
 update(UserNew, Con) ->
   redis_user:update(Con,UserNew).
 
-delete(#user{nick = Nick}, Con) ->
-  redis_user:delete(Con,Nick).
+delete(U, Con) ->
+  redis_user:delete(Con,U).

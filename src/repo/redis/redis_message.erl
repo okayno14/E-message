@@ -7,8 +7,8 @@
 %%% Created : 07. авг. 2022 10:21
 %%%-------------------------------------------------------------------
 -module(redis_message).
--include("../../../include/entity.hrl").
--include("../../../_build/default/lib/jsonerl/include/jsonerl.hrl").
+-include_lib("e_message/include/entity.hrl").
+-include_lib("jsonerl/include/jsonerl.hrl").
 -export([write/2,
         read/2,
         update/2,
@@ -30,8 +30,14 @@ write(Con,#message{}=Message)->
   Commited.
 
 read(Con,MID) when MID =/= -1 ->
-  {ok,JSON} = eredis:q(Con,["HGET",atom_to_list(message),MID]),
-  [?json_to_record(message,JSON)].
+  {ok,T} = eredis:q(Con,["HGET",atom_to_list(message),MID]),
+  case T of
+    undefined->
+      [];
+    JSON->
+      M = ?json_to_record(message,JSON),
+      [parse_state(M)]
+  end.
 
 update(Con,#message{id = MID}=Message)->
   {ok,_}=eredis:q(Con,["HSET",atom_to_list(message),MID,?record_to_json(message,Message)]),
@@ -40,3 +46,7 @@ update(Con,#message{id = MID}=Message)->
 delete(Con,#message{id=MID})->
   {ok,_} = eredis:q(Con,["HDEL",atom_to_list(message),MID]),
   ok.
+
+
+parse_state(M)->
+  M#message{state=binary_to_atom(M#message.state)}.

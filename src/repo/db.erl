@@ -9,7 +9,7 @@
 -module(db).
 -author("aleksandr_work").
 -export([start_db/0,
-        start_db/4]).
+        start_db/5]).
 
 %%Модуль для управления соединением с бд
 
@@ -22,5 +22,5 @@ start_db()->
 %%Подключиться к БД, создать структуры, если их нет
 %%{ok, Connection}
 %%{error, Cause}
-start_db(Domain,Port,_User,Pass)->
-  redis_db:start_db(Domain,Port,_User,Pass).
+start_db(Domain,Port,Database,_User,Pass)->
+  redis_db:start_db(Domain,Port,Database,_User,Pass).

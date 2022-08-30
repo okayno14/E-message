@@ -8,4 +8,10 @@
 %%%-------------------------------------------------------------------
 -author("aleksandr_work").
 
--record(config,{port,acceptors_quantity}).
+-record(config,{db_domain,
+				db_user,
+				db_pass,
+				db,
+				db_port,
+				port,
+				acceptors_quantity}).

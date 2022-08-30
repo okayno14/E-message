@@ -24,7 +24,7 @@
         delete_dialogue/2]).
 
 create_dialogue(Dialogue, Con)->
-  dialogue_service:create_dialogue(Dialogue, Con).
+  error_catcher:handle(dialogue_service:create_dialogue(Dialogue, Con)).
 
 get_dialogue(ID, Con)->
   dialogue_service:get_dialogue(ID, Con).

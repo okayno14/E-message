@@ -113,6 +113,21 @@ handle_request_result(Res,HappyParse,Socket)->
       gen_tcp:send(Socket,["ok\n\n"|HappyParse(OK)])
   end.
 
+%Пытается авторизовать пользователя.
+%Если данные не валидны или пользователя нет в системе, то отправляется исключение
+%throw:{error,not_authorised}
+authorise(Nick,Pass,Con)->
+  User = #user{nick=Nick,pass=Pass},
+  try
+    common_validation_service:check_object(User,user_validation_service:all()),
+    user_controller:get_user(Nick,Pass,Con)
+  catch
+    throw:{error,invalid_data}->
+      throw({error,not_authorised});
+    throw:{error,not_found}->
+      throw({error,not_authorised})
+  end.
+
 %%Ищет пользователя в базе для проведения авторизации.
 %%В случае успеха возвращает true,
 %%иначе - посылает клиенту ответ и возвращает false
@@ -125,7 +140,6 @@ is_authorised(Nick,Pass,Socket,Con)->
         {error,_Reason}->
           false;
         []->
-          handle_error(not_authorized,Socket),
           false;
         _User->
           true
@@ -148,21 +162,13 @@ create_user_handler(ArgsJSON, Socket, Con)->
 create_dialogue_handler(ArgsJSON,Socket, Con)->
   Args = ?json_to_record(create_dialogue,ArgsJSON),
   #create_dialogue{nick = Nick, pass=Pass, name = Name, userNicks = UserNicks}=Args,
-  case is_authorised(Nick,Pass,Socket, Con) of
-    true->
-      D=#dialogue{name=Name,users = UserNicks},
-      case common_validation_service:is_object_valid(D,dialogue_validation_service:all()) of
-        true->
-          Res=dialogue_controller:create_dialogue(D, Con),
-          handle_request_result(Res,
-                                  fun(X)->?record_to_json(dialogue,X) end,
-                                  Socket);
-        false->
-          handle_error(invalid_data,Socket)
-      end;
-    false->
-      handle_error(not_authorised,Socket)
-  end.
+  authorise(Nick,Pass,Con),
+  D=#dialogue{name=Name,users = UserNicks},
+  common_validation_service:check_object(D,dialogue_validation_service:all()),
+  Res=dialogue_controller:create_dialogue(D, Con),
+  handle_request_result(Res,
+                          fun(X)->?record_to_json(dialogue,X) end,
+                          Socket).
 
 get_dialogues_handler(ArgsJSON,Socket, Con)->
   Args=?json_to_record(get_dialogues,ArgsJSON),

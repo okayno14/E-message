@@ -165,9 +165,9 @@ create_user_handler(ArgsJSON, Socket, Con)->
 create_dialogue_handler(ArgsJSON,Socket, Con)->
   Args = ?json_to_record(create_dialogue,ArgsJSON),
   #create_dialogue{nick = Nick, pass=Pass, name = Name, userNicks = UserNicks}=Args,
-  authorise(Nick,Pass,Con),
   D=#dialogue{name=Name,users = UserNicks},
   common_validation_service:check_object(D,dialogue_validation_service:all()),
+  authorise(Nick,Pass,Con),
   Res=dialogue_controller:create_dialogue(D, Con),
   handle_request_result(Res,
                           fun(X)->?record_to_json(dialogue,X) end,
@@ -188,10 +188,10 @@ get_dialogues_handler(ArgsJSON,Socket, Con)->
 quit_dialogue_handler(ArgsJSON,Socket, Con)->
   Args = ?json_to_record(quit_dialogue,ArgsJSON),
   #quit_dialogue{nick = Nick, pass = Pass, id=DID}=Args,
-  authorise(Nick,Pass,Con),
   common_validation_service:check_field(#dialogue{id=DID},
                                           dialogue_validation_service:all(),
                                           #dialogue.id),
+  authorise(Nick,Pass,Con),
   _U=#user{nick = Nick,pass = Pass},
   D=dialogue_controller:get_dialogue(DID, Con),
   Res = dialogue_controller:quit_dialogue(D,_U, Con),
@@ -227,13 +227,13 @@ send_message_handler(ArgsJSON, Socket, Con)->
 get_message_handler(ArgsJSON, Socket, Con)->
   Args = ?json_to_record(get_message,ArgsJSON),
   #get_message{nick = Nick,pass = Pass, messageID = MID, dialogueID = DID}=Args,
-  authorise(Nick,Pass,Con),
   common_validation_service:check_field(#message{id=MID},
                                           message_validation_service:all(),
                                           #message.id),
   common_validation_service:check_field(#dialogue{id=DID},
                                           dialogue_validation_service:all(),
                                           #dialogue.id),
+  authorise(Nick,Pass,Con),
   handle_request_result(
         dialogue_controller:get_message(#user{nick=Nick},MID,DID,Con),
         fun(X)-> ?record_to_json(message,X) end,
@@ -243,10 +243,10 @@ get_messages_handler(ArgsJSON, Socket, Con)->
   Args = ?json_to_record(get_messages,ArgsJSON),
   #get_messages{nick = Nick, pass=Pass, id = DID}=Args,
   User = #user{nick=Nick,pass=Pass},
-  authorise(Nick,Pass,Con),
   common_validation_service:check_field(#dialogue{id=DID},
                                           dialogue_validation_service:all(),
                                           #dialogue.id),
+  authorise(Nick,Pass,Con),
   D=dialogue_controller:get_dialogue(DID, Con),
   io:format("TRACE server:get_messages_handler/3 D:~p~n",[D]),
   Res = dialogue_controller:get_messages(User,D, Con),
@@ -260,26 +260,19 @@ read_message_handler(ArgsJSON,Socket, Con)->
   Args = ?json_to_record(read_message,ArgsJSON),
   #read_message{nick = Nick,pass = Pass, messageID=MID, dialogueID=DID}=Args,
   User = #user{nick=Nick,pass=Pass},
-  case is_authorised(Nick,Pass,Socket, Con) of
-    true->
-      case dialogue_controller:get_message(User,MID,DID,Con) of
-        {error,_R}->
-          handle_error(_R,Socket);
-        M->
-          case  dialogue_controller:get_dialogue(DID,Con) of
-            {error,_RR}->
-              handle_error(_RR,Socket);
-            D->
-              Res = dialogue_controller:read_message(#user{nick=Nick},M,D,Con),
-              handle_request_result(
-            Res,
-            fun(X)-> ?record_to_json(message,X) end,
-            Socket)
-          end
-      end;
-    false->
-      handle_error(not_authorised,Socket)
-  end.
+  common_validation_service:check_field(#message{id=MID},
+                                          message_validation_service:all(),
+                                          #message.id),
+  common_validation_service:check_field(#dialogue{id=DID},
+                                          dialogue_validation_service:all(),
+                                          #dialogue.id),
+  authorise(Nick,Pass,Con),
+  M = dialogue_controller:get_message(User,MID,DID,Con),
+  D = dialogue_controller:get_dialogue(DID,Con),
+  Res = dialogue_controller:read_message(#user{nick=Nick},M,D,Con),
+  handle_request_result(Res,
+                          fun(X)-> ?record_to_json(message,X) end,
+                          Socket).
 
 change_text_handler(ArgsJSON,Socket, Con)->
   Args = ?json_to_record(change_text,ArgsJSON),

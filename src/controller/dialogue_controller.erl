@@ -45,7 +45,7 @@ add_message(D,M, Con)->
   error_catcher:handle(dialogue_service:add_message(D,M,Con)).
 
 read_message(U,M,D,Con)->
-  dialogue_service:read_message(U,M,D,Con).
+  error_catcher:handle(dialogue_service:read_message(U,M,D,Con)).
 
 change_text(User,M,Text,Con)->
   dialogue_service:change_text(User,M,Text,Con).

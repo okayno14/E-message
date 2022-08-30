@@ -188,38 +188,24 @@ get_dialogues_handler(ArgsJSON,Socket, Con)->
 quit_dialogue_handler(ArgsJSON,Socket, Con)->
   Args = ?json_to_record(quit_dialogue,ArgsJSON),
   #quit_dialogue{nick = Nick, pass = Pass, id=DID}=Args,
-  io:format("TRACE server:quit_dialogue_handler/2 parsed User:~p ~p~n",[Nick,Pass]),
-  io:format("TRACE server:quit_dialogue_handler/2 parsed dialID: ~p~n",[DID]),
-  case is_authorised(Nick,Pass,Socket, Con) of
-    true->
-      io:format("TRACE server:quit_dialogue_handler/2 User authorised~n"),
-      _U=#user{nick = Nick,pass = Pass},
-      D=dialogue_controller:get_dialogue(DID, Con),
-      io:format("TRACE server:quit_dialogue_handler/2 Finded Dialogue:~p~n",[D]),
-      case D of
-        {error,_R}->
-          handle_error(_R,Socket);
-        D->
-          Res = dialogue_controller:quit_dialogue(D,_U, Con),
-          io:format("TRACE server:quit_dialogue_handler/2 Res of controller call:~p~n",[Res]),
-          case Res of
-            {error,_R1}->
-              handle_error(_R1,Socket);
-            _ when is_record(Res,dialogue)->
-              handle_request_result(
+  authorise(Nick,Pass,Con),
+  common_validation_service:check_field(#dialogue{id=DID},
+                                          dialogue_validation_service:all(),
+                                          #dialogue.id),
+  _U=#user{nick = Nick,pass = Pass},
+  D=dialogue_controller:get_dialogue(DID, Con),
+  Res = dialogue_controller:quit_dialogue(D,_U, Con),
+  if 
+    is_record(Res,dialogue)->
+      handle_request_result(
                 Res,
                 fun(X)->?record_to_json(dialogue,X) end,
                 Socket);
-            _ when is_atom(Res)->
-              handle_request_result(
+    is_atom(Res)->
+      handle_request_result(
                 Res,
                 fun(X)->atom_to_list(X) end,
                 Socket)
-          end
-      end;
-    false->
-      io:format("TRACE server:quit_dialogue_handler/2 User not_authorised~n"),
-      handle_error(not_authorised,Socket)
   end.
 
 send_message_handler(ArgsJSON, Socket, Con)->

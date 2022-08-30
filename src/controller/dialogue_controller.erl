@@ -33,7 +33,7 @@ get_dialogues(U, Con)->
   error_catcher:handle(dialogue_service:get_dialogues(U, Con)).
 
 quit_dialogue(D,U, Con)->
-  dialogue_service:quit_dialogue(D,U, Con).
+  error_catcher:handle(dialogue_service:quit_dialogue(D,U, Con)).
 
 get_message(U,MID,DID,Con)->
   dialogue_service:get_message(U,MID,DID,Con).

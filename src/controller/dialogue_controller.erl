@@ -27,10 +27,10 @@ create_dialogue(Dialogue, Con)->
   error_catcher:handle(dialogue_service:create_dialogue(Dialogue, Con)).
 
 get_dialogue(ID, Con)->
-  dialogue_service:get_dialogue(ID, Con).
+  error_catcher:handle(dialogue_service:get_dialogue(ID, Con)).
 
 get_dialogues(U, Con)->
-  dialogue_service:get_dialogues(U, Con).
+  error_catcher:handle(dialogue_service:get_dialogues(U, Con)).
 
 quit_dialogue(D,U, Con)->
   dialogue_service:quit_dialogue(D,U, Con).

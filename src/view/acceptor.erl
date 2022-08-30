@@ -86,7 +86,10 @@ serve_request(Socket, Request,Con)->
     throw:{error,invalid_data} ->
       handle_error(invalid_data,Socket);
     throw:{error,_R}->
-      handle_error(_R,Socket)
+      handle_error(_R,Socket);
+    error:{badmatch,Val}->
+      io:format("ERROR acceptor:serve_request/3 Badmatch, Val:~p~n",[Val]),
+      handle_error({error,critical_server_exception},Socket)
   end.
 
 parseRequest(Request)->
@@ -131,7 +134,7 @@ authorise(Nick,Pass,Con)->
 %%Ищет пользователя в базе для проведения авторизации.
 %%В случае успеха возвращает true,
 %%иначе - посылает клиенту ответ и возвращает false
-is_authorised(Nick,Pass,Socket,Con)->
+is_authorised(Nick,Pass,_Socket,Con)->
   User = #user{nick=Nick,pass=Pass},
   case common_validation_service:is_object_valid(User,user_validation_service:all()) of
     true->
@@ -173,18 +176,14 @@ create_dialogue_handler(ArgsJSON,Socket, Con)->
 get_dialogues_handler(ArgsJSON,Socket, Con)->
   Args=?json_to_record(get_dialogues,ArgsJSON),
   #get_dialogues{nick = Nick,pass = Pass}=Args,
-  case is_authorised(Nick,Pass,Socket, Con) of
-    true->
-      _U=#user{nick = Nick,pass = Pass},
-      Res=dialogue_controller:get_dialogues(_U, Con),
-      io:format("TRACE server:get_dialogues_handler/3 D_LIST:~p~n",[Res]),
-      handle_request_result(
-        Res,
-        fun(Y)-> parse:encodeRecordArray(Y,fun(X)->?record_to_json(dialogue,X) end) end,
-        Socket);
-    false->
-      handle_error(not_authorised,Socket)
-  end.
+  authorise(Nick,Pass,Con),
+  _U=#user{nick = Nick,pass = Pass},
+  Res=dialogue_controller:get_dialogues(_U, Con),
+  io:format("TRACE server:get_dialogues_handler/3 D_LIST:~p~n",[Res]),
+  handle_request_result(
+    Res,
+    fun(Y)-> parse:encodeRecordArray(Y,fun(X)->?record_to_json(dialogue,X) end) end,
+    Socket).
 
 quit_dialogue_handler(ArgsJSON,Socket, Con)->
   Args = ?json_to_record(quit_dialogue,ArgsJSON),

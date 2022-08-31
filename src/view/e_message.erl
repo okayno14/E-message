@@ -80,7 +80,12 @@ loop(AcceptorList,ListenSocket,Con,
       io:format("TRACE e-message:loop/3. Received stop-message from ~p~n",[From]),
       free_resources(AcceptorList,ListenSocket,Con),
       io:format("TRACE e-message:loop/3. STOP. Sending answer~n"),
-      From ! ok
+      From ! ok;
+    {clean_db, From}->
+      db:clean_db(Con),
+      io:format("TRACE e-message:loop/3. Server cleaned db~n"),
+      From ! ok,
+      loop(AcceptorList,ListenSocket,Con,Config)
   end.
 
 %%вспомогательные функции

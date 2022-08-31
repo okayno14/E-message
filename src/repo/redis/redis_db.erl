@@ -9,7 +9,8 @@
 -module(redis_db).
 -author("aleksandr_work").
 -export([start_db/0,
-        start_db/5]).
+        start_db/5,
+        clean_db/1]).
 
 %%Модуль для управления соединением с бд
 
@@ -21,3 +22,6 @@ start_db()->
 
 start_db(Domain,Port,Database,_User,Pass)->
   eredis:start_link(Domain, Port, Database, Pass, 0).
+
+clean_db(Con)->
+  eredis:q(Con,["FLUSHALL"]).

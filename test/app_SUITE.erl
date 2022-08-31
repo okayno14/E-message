@@ -20,8 +20,13 @@ init_per_suite(Config)->
 	Config.
 
 end_per_suite(Config)->
-	e_message ! {stop,self()},
-	ok.
+	e_message ! {clean_db,self()},
+	receive
+		ok->
+			io:format("client got answer~n"),
+			e_message ! {stop,self()},
+				ok
+	end.	
 
 groups()->
 	[

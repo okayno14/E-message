@@ -9,7 +9,8 @@
 -module(db).
 -author("aleksandr_work").
 -export([start_db/0,
-        start_db/5]).
+        start_db/5,
+        clean_db/1]).
 
 %%Модуль для управления соединением с бд
 
@@ -24,3 +25,6 @@ start_db()->
 %%{error, Cause}
 start_db(Domain,Port,Database,_User,Pass)->
   redis_db:start_db(Domain,Port,Database,_User,Pass).
+
+clean_db(Con)->
+  redis_db:clean_db(Con).

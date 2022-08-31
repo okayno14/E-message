@@ -16,6 +16,7 @@ all()->
 init_per_suite(Config)->
 	Path = ct:get_config(server_conf_path),
 	ok=e_message:start(Path),
+	init_db:init_db(),	
 	Config.
 
 end_per_suite(Config)->
